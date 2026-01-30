@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { User, MapPin, GraduationCap, AlertCircle, Loader2, Upload, FileText } from 'lucide-react';
+import { User, Loader2, AlertCircle } from 'lucide-react';
 import api from '../api/axios';
-import { uploadToCloudinary } from '../utils/uploadFile.js';
+import { uploadToCloudinary } from '../utils/uploadFile';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 const StudentRegister = () => {
   const navigate = useNavigate();
+  const { t, highContrast } = useAccessibility();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState({ profile: false, aadhaar: false });
@@ -15,26 +17,12 @@ const StudentRegister = () => {
     first_name: '', last_name: '', email: '', phone: '', password: '',
     state: '', district: '', city: '', pincode: '',
     disability_type: '', highest_qualification: '', current_class_year: '',
-    profile_image_url: '',
-    aadhaar_card_url: ''
+    profile_image_url: '', aadhaar_card_url: ''
   });
 
-  // Dynamic Data Fetching
-  const { data: states = [] } = useQuery({
-    queryKey: ['states'],
-    queryFn: async () => (await api.get('/locations/states')).data
-  });
-
-  const { data: districts = [], isFetching: loadingDistricts } = useQuery({
-    queryKey: ['districts', formData.state],
-    queryFn: async () => (await api.get(`/locations/districts/${formData.state}`)).data,
-    enabled: !!formData.state
-  });
-
-  const { data: metadata } = useQuery({
-    queryKey: ['metadata'],
-    queryFn: async () => (await api.get('/locations/metadata')).data
-  });
+  const { data: states = [] } = useQuery({ queryKey: ['states'], queryFn: async () => (await api.get('/locations/states')).data });
+  const { data: districts = [], isFetching: loadingDistricts } = useQuery({ queryKey: ['districts', formData.state], queryFn: async () => (await api.get(`/locations/districts/${formData.state}`)).data, enabled: !!formData.state });
+  const { data: metadata } = useQuery({ queryKey: ['metadata'], queryFn: async () => (await api.get('/locations/metadata')).data });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,114 +33,103 @@ const StudentRegister = () => {
   const handleFileChange = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setUploading(prev => ({ ...prev, [type]: true }));
     try {
-      let url = "";
-      if (type === 'profile') {
-        url = await uploadToCloudinary(file, ['image/jpeg', 'image/png']);
-        setFormData(prev => ({ ...prev, profile_image_url: url }));
-      } else {
-        url = await uploadToCloudinary(file, ['application/pdf']);
-        setFormData(prev => ({ ...prev, aadhaar_card_url: url }));
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setUploading(prev => ({ ...prev, [type]: false }));
-    }
+      // Use logic based on type
+      const url = await uploadToCloudinary(file, type === 'profile' ? ['image/jpeg', 'image/png'] : ['application/pdf']);
+      setFormData(prev => ({ ...prev, [type === 'profile' ? 'profile_image_url' : 'aadhaar_card_url']: url }));
+    } catch (err) { setError(err.message); } 
+    finally { setUploading(prev => ({ ...prev, [type]: false })); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.profile_image_url || !formData.aadhaar_card_url) {
-      setError("Please upload all required files.");
+      setError(t.errors.uploadFiles);
       return;
     }
-
     setLoading(true);
     setError('');
+
     try {
-      await api.post('/auth/studentRegister', formData);
+      await api.post('/auth/studentRegister', formData); // Backend adds role automatically
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      if (err.response?.status === 409) setError(t.errors.conflict);
+      else setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
+  // Styles
+  const bgClass = highContrast ? "bg-black text-yellow-400 border-yellow-400" : "bg-white text-slate-900 border-slate-100";
+  const inputClass = highContrast ? "bg-black border-yellow-400 text-yellow-400 placeholder-yellow-700" : "bg-white border-slate-300";
+  const btnClass = highContrast ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-primary text-white hover:bg-primary-dark";
+
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-100">
-        <h2 className="text-3xl font-bold text-slate-900 mb-8 flex items-center gap-3">
-          <User className="text-primary" size={32} /> Student Registration
+    <div className={`max-w-4xl mx-auto py-10 px-4 ${highContrast ? 'bg-black min-h-screen' : ''}`}>
+      <div className={`shadow-xl rounded-2xl p-8 border ${bgClass}`}>
+        <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
+          <User size={32} /> {t.register.title}
         </h2>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 flex items-center gap-3" role="alert">
-            <AlertCircle size={20} />
-            <span>{error}</span>
-          </div>
-        )}
+        {error && <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-600 text-red-700 flex items-center gap-2"><AlertCircle size={20}/>{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <section className="grid md:grid-cols-2 gap-4">
-            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">Personal & Security</h3>
-            <input name="first_name" placeholder="First Name" required onChange={handleChange} className="p-3 border rounded-lg" />
-            <input name="last_name" placeholder="Last Name" onChange={handleChange} className="p-3 border rounded-lg" />
-            <input name="email" type="email" placeholder="Email" required onChange={handleChange} className="p-3 border rounded-lg" />
-            <input name="phone" placeholder="Phone" required onChange={handleChange} className="p-3 border rounded-lg" />
-            <input name="password" type="password" placeholder="Password" required onChange={handleChange} className="p-3 border rounded-lg md:col-span-2" />
+            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">{t.register.personalInfo}</h3>
+            <input name="first_name" placeholder={t.register.firstName} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            <input name="last_name" placeholder={t.register.lastName} onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            <input name="email" type="email" placeholder={t.register.email} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            <input name="phone" placeholder={t.register.phone} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            <input name="password" type="password" placeholder={t.register.password} required onChange={handleChange} className={`p-3 border rounded-lg md:col-span-2 ${inputClass}`} />
           </section>
 
           <section className="grid md:grid-cols-2 gap-4">
-            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">Location</h3>
-            <select name="state" required onChange={handleChange} className="p-3 border rounded-lg uppercase">
-              <option value="">Select State</option>
+            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">{t.register.location}</h3>
+            <select name="state" required onChange={handleChange} className={`p-3 border rounded-lg uppercase ${inputClass}`}>
+              <option value="">{t.register.state}</option>
               {states.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
             </select>
-            <select name="district" required onChange={handleChange} disabled={!formData.state || loadingDistricts} className="p-3 border rounded-lg uppercase">
-              <option value="">{loadingDistricts ? 'Loading...' : 'Select District'}</option>
+            <select name="district" required onChange={handleChange} disabled={!formData.state} className={`p-3 border rounded-lg uppercase ${inputClass}`}>
+              <option value="">{loadingDistricts ? t.register.loading : t.register.district}</option>
               {districts.map(d => <option key={d} value={d}>{d.toUpperCase()}</option>)}
             </select>
-            <input name="city" placeholder="City" required onChange={handleChange} className="p-3 border rounded-lg" />
-            <input name="pincode" placeholder="Pincode" required onChange={handleChange} className="p-3 border rounded-lg" />
+            <input name="city" placeholder={t.register.city} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            <input name="pincode" placeholder={t.register.pincode} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
           </section>
 
           <section className="grid md:grid-cols-2 gap-4">
-            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">Documents (Required)</h3>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-600">Profile Photo (JPG/PNG)</label>
-              <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profile')} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100" />
-              {uploading.profile && <Loader2 className="animate-spin text-primary" size={16} />}
-              {formData.profile_image_url && <span className="text-green-600 text-xs font-bold">✓ Uploaded</span>}
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-600">Aadhaar Card (PDF)</label>
-              <input type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'aadhaar')} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100" />
-              {uploading.aadhaar && <Loader2 className="animate-spin text-primary" size={16} />}
-              {formData.aadhaar_card_url && <span className="text-green-600 text-xs font-bold">✓ Uploaded</span>}
-            </div>
-          </section>
-
-          <section className="grid md:grid-cols-2 gap-4">
-            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">Academic</h3>
-            <select name="disability_type" required onChange={handleChange} className="p-3 border rounded-lg">
-              <option value="">Disability Type</option>
-              <option value="Visual Impairment">Visual Impairment</option>
-              <option value="Locomotor Disability">Locomotor Disability</option>
-              <option value="Other">Other</option>
-            </select>
-            <select name="highest_qualification" required onChange={handleChange} className="p-3 border rounded-lg">
-              <option value="">Qualification</option>
+            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">{t.register.academic}</h3>
+            {/* FIXED: Input instead of Select for Disability */}
+            <input name="disability_type" placeholder={t.register.disabilityType} required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`} />
+            
+            <select name="highest_qualification" required onChange={handleChange} className={`p-3 border rounded-lg ${inputClass}`}>
+              <option value="">{t.register.qualification}</option>
               {metadata?.qualifications?.map(q => <option key={q} value={q}>{q}</option>)}
             </select>
-            <input name="current_class_year" placeholder="Class/Year (e.g., 2nd Year)" required onChange={handleChange} className="p-3 border rounded-lg md:col-span-2" />
+            <input name="current_class_year" placeholder={t.register.classYear} required onChange={handleChange} className={`p-3 border rounded-lg md:col-span-2 ${inputClass}`} />
           </section>
 
-          <button type="submit" disabled={loading} className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary-dark transition-all flex justify-center items-center gap-2">
-            {loading ? <Loader2 className="animate-spin" /> : 'Register as Student'}
+          <section className="grid md:grid-cols-2 gap-4">
+            <h3 className="col-span-2 text-lg font-semibold border-b pb-2">{t.register.docs}</h3>
+            <div>
+              <label className="text-sm font-bold">{t.register.profilePhoto}</label>
+              <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profile')} className={`block w-full text-sm mt-1 ${inputClass}`} />
+              {uploading.profile && <span className="text-xs">{t.register.uploading}</span>}
+              {formData.profile_image_url && <span className="text-green-600 text-xs font-bold">✓ {t.register.uploaded}</span>}
+            </div>
+            <div>
+              <label className="text-sm font-bold">{t.register.aadhaar}</label>
+              <input type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'aadhaar')} className={`block w-full text-sm mt-1 ${inputClass}`} />
+              {uploading.aadhaar && <span className="text-xs">{t.register.uploading}</span>}
+              {formData.aadhaar_card_url && <span className="text-green-600 text-xs font-bold">✓ {t.register.uploaded}</span>}
+            </div>
+          </section>
+
+          <button type="submit" disabled={loading} className={`w-full py-4 rounded-xl font-bold flex justify-center items-center gap-2 ${btnClass}`}>
+            {loading ? <Loader2 className="animate-spin" /> : t.register.submit}
           </button>
         </form>
       </div>

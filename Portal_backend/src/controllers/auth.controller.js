@@ -149,7 +149,7 @@ export const studentRegister = async (req, res) => {
                 last_name : user.last_name,
                 email : user.email,
             });
-            console.log('Stream user created successfully for:', newStudent._id);
+            console.log('Stream user created successfully for:', userId);
         } catch (err) {
             console.error('Error creating Stream user:', err);
         }
@@ -311,7 +311,7 @@ export const scribeRegister = async (req, res) => {
                 last_name : user.last_name,
                 email : user.email,
             });
-            console.log('Stream user created successfully for:', newStudent._id);
+            console.log('Stream user created successfully for:', userId);
         } catch (err) {
             console.error('Error creating Stream user:', err);
         }

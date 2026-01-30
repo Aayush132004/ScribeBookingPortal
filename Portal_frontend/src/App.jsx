@@ -1,17 +1,31 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AccessibilityProvider } from './context/AccessibilityContext';
 import Layout from './components/Layout';
+
+// --- Page Imports ---
 import Login from './pages/Login';
 import RegisterSelect from './pages/RegisterSelect';
 import StudentRegister from './pages/StudentRegister';
 import ScribeRegister from './pages/ScribeRegister';
 import AcceptRequest from './pages/scribe/AcceptRequest';
+
+// Student Pages
+import StudentRequests from './pages/student/StudentRequests';
+import CreateRequest from './pages/student/CreateRequest';
 import SubmitFeedback from './pages/student/SubmitFeedback';
+
+// Scribe Pages
+import ScribeDashboard from './pages/scribe/ScribeDashboard';
+import ScribeAvailability from './pages/scribe/ScribeAvailability';
+
+// Shared Pages
 import ChatPage from './pages/shared/ChatPage';
-import AdminDashboard from './pages/admin/AdminDashboard';
 import VideoCall from './pages/shared/VideoCall';
 
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Helper component to protect routes
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -25,65 +39,88 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
+    // QueryClient and Router are already in main.jsx, so we don't need them here.
+    <AccessibilityProvider>
+      <AuthProvider>
+        <Routes>
+          {/* --- Public Routes --- */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register-select" element={<RegisterSelect />} />
+          <Route path="/register/student" element={<StudentRegister />} />
+          <Route path="/register/scribe" element={<ScribeRegister />} />
+          
+          {/* --- Protected Student Routes --- */}
+          <Route 
+            path="/student/dashboard" 
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentRequests />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/student/create-request" 
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <CreateRequest />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/student/requests" 
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <StudentRequests />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/student/feedback/:requestId" 
+            element={
+              <ProtectedRoute allowedRole="STUDENT">
+                <SubmitFeedback />
+              </ProtectedRoute>
+            } 
+          />
 
-        <Route path="/register-select" element={<RegisterSelect />} />
-<Route path="/register/student" element={<StudentRegister />} />
-<Route path="/register/scribe" element={<ScribeRegister />} />
-        
-        {/* Protected Student Routes */}
-        <Route 
-          path="/student/dashboard" 
-          element={
-            <ProtectedRoute allowedRole="STUDENT">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-2xl font-bold">Student Dashboard</h2>
-                <p className="mt-2 text-slate-600">Welcome! Here you can create and manage exam requests.</p>
-              </div>
-            </ProtectedRoute>
-          } 
-        />
+          {/* --- Protected Scribe Routes --- */}
+          <Route 
+            path="/scribe/dashboard" 
+            element={
+              <ProtectedRoute allowedRole="SCRIBE">
+                <ScribeDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/scribe/availability" 
+            element={
+              <ProtectedRoute allowedRole="SCRIBE">
+                <ScribeAvailability />
+              </ProtectedRoute>
+            } 
+          />
 
-        {/* Protected Scribe Routes */}
-        <Route 
-          path="/scribe/dashboard" 
-          element={
-            <ProtectedRoute allowedRole="SCRIBE">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-2xl font-bold">Scribe Dashboard</h2>
-                <p className="mt-2 text-slate-600">Welcome! View your assigned bookings and manage availability.</p>
-              </div>
-            </ProtectedRoute>
-          } 
-        />
+          {/* --- Shared Routes --- */}
+          <Route path="/chat/:requestId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/video/:requestId" element={<ProtectedRoute><VideoCall /></ProtectedRoute>} />
+          <Route path="/accept-request" element={<AcceptRequest />} />
 
-        {/* Redirects */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/accept-request" element={<AcceptRequest />} />
-        <Route path="/chat/:requestId" element={<ChatPage />} />
-        <Route 
-  path="/student/feedback/:requestId" 
-  element={
-    <ProtectedRoute allowedRole="STUDENT">
-      <SubmitFeedback />
-    </ProtectedRoute>
-  } 
-/>
-<Route 
-  path="/admin/dashboard" 
-  element={
-    <ProtectedRoute allowedRole="ADMIN">
-      <AdminDashboard />
-    </ProtectedRoute>
-  } 
-/>
-<Route path="/video/:requestId" element={<ProtectedRoute><VideoCall /></ProtectedRoute>} />
-      </Routes>
-      
-    </AuthProvider>
+          {/* --- Admin Routes --- */}
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* --- Redirects --- */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
+    </AccessibilityProvider>
   );
 }
 
