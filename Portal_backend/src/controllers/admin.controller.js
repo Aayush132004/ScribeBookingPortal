@@ -36,6 +36,8 @@ export const loadScribes = async (req, res) => {
         u.phone,
         u.state,
         u.district,
+        u.profile_image_url, 
+        u.aadhaar_card_url,  
         s.is_verified,
         s.qualification_doc_url,
         s.created_at

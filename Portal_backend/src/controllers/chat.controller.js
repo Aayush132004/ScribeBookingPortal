@@ -1,14 +1,18 @@
-const { generateStreamToken } = require("../config/stream");
+import { generateStreamToken } from "../config/stream.js";
 
-async function getStreamToken(req, res) {
-    try {
-        const token = generateStreamToken(req.body.user._id);
-        res.status(200).json({ token });
-    } catch (err) {
-        console.error("Error generating token:", err);
-        res.status(500).json({ message: "Failed to generate token" });
+export const getStreamToken = async (req, res) => {
+  try {
+    const userId = req.body?.user?._id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID missing" });
     }
-}
-module.exports = {
-    getStreamToken,
+
+    const token = generateStreamToken(userId);
+
+    res.status(200).json({ token });
+  } catch (err) {
+    console.error("Error generating Stream token:", err);
+    res.status(500).json({ message: "Failed to generate token" });
+  }
 };

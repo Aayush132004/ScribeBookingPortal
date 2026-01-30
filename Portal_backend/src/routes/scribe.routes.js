@@ -1,6 +1,6 @@
 import express from "express";
-import { userMiddleware } from "../middleware/user.middleware";
-import { acceptExamRequest, getScribeProfile, loadStudents, loadUnavailability, setUnavailability } from "../controllers/scribe.controller";
+import { userMiddleware } from "../middleware/user.middleware.js";
+import { acceptExamRequest, getScribeProfile, loadStudents, loadUnavailability, setUnavailability } from "../controllers/scribe.controller.js";
 
 
 export const scribeRoutes = express.Router();

@@ -1,42 +1,33 @@
-const { StreamChat } = require('stream-chat');
-require('dotenv/config');
+import { StreamChat } from 'stream-chat';
+import 'dotenv/config';
 
-const apikey = process.env.STREAM_API_KEY;
-const apisecret = process.env.STREAM_SECRET_KEY;
+const apiKey = process.env.STREAM_API_KEY;
+const apiSecret = process.env.STREAM_API_SECRET;
 
-if (!apikey || !apisecret) {
-  console.log('STREAM_API_KEY and STREAM_SECRET_KEY missing in .env file');
+if (!apiKey || !apiSecret) {
+  throw new Error('STREAM_API_KEY or STREAM_API_SECRET missing in .env');
 }
 
-const streamClient = StreamChat.getInstance(apikey, apisecret);
+const streamClient = StreamChat.getInstance(apiKey, apiSecret);
 
-// Function to create or update user
-const upsertStreamUser = async (userData) => {
+// Create or update user
+export const upsertStreamUser = async (userData) => {
   try {
     await streamClient.upsertUsers([userData]);
     return userData;
   } catch (err) {
     console.error('Error creating Stream user:', err);
+    throw err;
   }
 };
 
-// Function to generate token
-const generateStreamToken = (userId) => {
+// Generate token
+export const generateStreamToken = (userId) => {
   try {
-    console.log("working");
-    const userIdStr = userId.toString(); // ensure userId is string
-    const token = streamClient.createToken(userIdStr);
-    console.log(token);
-    return token;
+    const userIdStr = userId.toString();
+    return streamClient.createToken(userIdStr);
   } catch (err) {
-    console.error("Server Error in generating Stream Token:", err);
+    console.error('Error generating Stream token:', err);
     return null;
   }
-};
-
-// Export all functions
-module.exports = {
-  upsertStreamUser,
-  generateStreamToken,
-  streamClient,
 };
