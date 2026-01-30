@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 };
 
 function App() {
-  return (
+  return (  
     <AccessibilityProvider>
       <AuthProvider>
         {/* Wrap app in ToastProvider to enable notifications */}
