@@ -13,10 +13,13 @@ export const uploadToCloudinary = async (file, allowedTypes) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+  // Optional: Explicitly tell Cloudinary to auto-detect resource type
+  formData.append('resource_type', 'auto'); 
 
   try {
+    // --- FIX: Change '/upload' to '/auto/upload' ---
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/upload`,
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`,
       {
         method: 'POST',
         body: formData,

@@ -34,6 +34,8 @@ const AcceptRequest = () => {
   }, [token]);
 
   return (
+    <>
+     <Navbar/>
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-100 text-center">
         <div className="flex justify-center mb-6">
@@ -87,6 +89,7 @@ const AcceptRequest = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

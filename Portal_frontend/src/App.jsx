@@ -39,15 +39,15 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
 function App() {
   return (
-    // QueryClient and Router are already in main.jsx, so we don't need them here.
     <AccessibilityProvider>
       <AuthProvider>
         <Routes>
-          {/* --- Public Routes --- */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register-select" element={<RegisterSelect />} />
-          <Route path="/register/student" element={<StudentRegister />} />
-          <Route path="/register/scribe" element={<ScribeRegister />} />
+          {/* --- Public Routes (Now wrapped in Layout) --- */}
+          <Route path="/login" element={<Layout><Login /></Layout>} />
+          <Route path="/register-select" element={<Layout><RegisterSelect /></Layout>} />
+          <Route path="/register/student" element={<Layout><StudentRegister /></Layout>} />
+          <Route path="/register/scribe" element={<Layout><ScribeRegister /></Layout>} />
+          <Route path="/accept-request" element={<Layout><AcceptRequest /></Layout>} />
           
           {/* --- Protected Student Routes --- */}
           <Route 
@@ -104,7 +104,6 @@ function App() {
           {/* --- Shared Routes --- */}
           <Route path="/chat/:requestId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
           <Route path="/video/:requestId" element={<ProtectedRoute><VideoCall /></ProtectedRoute>} />
-          <Route path="/accept-request" element={<AcceptRequest />} />
 
           {/* --- Admin Routes --- */}
           <Route 

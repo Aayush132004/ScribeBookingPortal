@@ -10,21 +10,28 @@ const AdminDashboard = () => {
   const { data: scribes = [], isLoading, isError } = useQuery({
     queryKey: ['pending-scribes'],
     queryFn: async () => {
-      const res = await api.get('/admin/scribes?verified=false'); // Adjust to your admin controller endpoint
-      return res.data;
+      const res = await api.get('/admin/scribes?verified=false');
+      // FIX 1: Ensure we extract the array correctly
+      return res.data.scribes || []; 
     }
   });
 
   // Mutation to verify scribe
   const verifyMutation = useMutation({
-   mutationFn: async ({ scribeId, status }) => {
-  return await api.post(`/admin/verify-scribe`, { 
-    scribe_id: scribeId, // Match backend key
-    is_verified: status  // Match backend key
-  });
-},
+    mutationFn: async ({ scribeId, status }) => {
+      // FIX 2: Safety check for ID
+      if (!scribeId) throw new Error("Invalid Scribe ID");
+
+      return await api.post(`/admin/verify-scribe`, { 
+        scribe_id: scribeId, // Match backend key
+        is_verified: status
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['pending-scribes']);
+    },
+    onError: (err) => {
+      alert("Action failed: " + (err.response?.data?.message || err.message));
     }
   });
 
@@ -54,7 +61,7 @@ const AdminDashboard = () => {
           </div>
         ) : (
           scribes.map((scribe) => (
-            <div key={scribe.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div key={scribe.scribe_id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex items-center gap-4">
                 <img 
                   src={scribe.profile_image_url || 'https://via.placeholder.com/150'} 
@@ -65,38 +72,54 @@ const AdminDashboard = () => {
                   <h4 className="font-bold text-lg text-slate-900">{scribe.first_name} {scribe.last_name}</h4>
                   <p className="text-sm text-slate-500">{scribe.email} • {scribe.phone}</p>
                   <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-wider">
-                    {scribe.highest_qualification} • {scribe.city}
+                     {scribe.city}, {scribe.state}
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                <a 
-                  href={scribe.aadhaar_card_url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 transition-colors"
-                >
-                  <FileText size={16} /> Aadhaar <ExternalLink size={14} />
-                </a>
-                <a 
-                  href={scribe.qualification_doc_url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 transition-colors"
-                >
-                  <FileText size={16} /> Degree <ExternalLink size={14} />
-                </a>
+                {/* FIX 3: Check if URL exists before showing button */}
+                {scribe.aadhaar_card_url && scribe.aadhaar_card_url.startsWith('http') ? (
+                  <a 
+                    href={scribe.aadhaar_card_url} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 transition-colors"
+                  >
+                    <FileText size={16} /> Aadhaar <ExternalLink size={14} />
+                  </a>
+                ) : (
+                   <span className="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-sm font-bold border border-slate-200 cursor-not-allowed">
+                     No Aadhaar
+                   </span>
+                )}
+
+                {/* FIX 4: Check if URL exists for Degree */}
+                {scribe.qualification_doc_url && scribe.qualification_doc_url.startsWith('http') ? (
+                  <a 
+                    href={scribe.qualification_doc_url} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-100 transition-colors"
+                  >
+                    <FileText size={16} /> Degree <ExternalLink size={14} />
+                  </a>
+                ) : (
+                   <span className="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-sm font-bold border border-slate-200 cursor-not-allowed">
+                     No Degree
+                   </span>
+                )}
                 
                 <div className="flex gap-2 w-full md:w-auto md:ml-4">
                   <button 
-                    onClick={() => verifyMutation.mutate({ scribeId: scribe.id, status: true })}
+                    // FIX 5: Use 'scribe.scribe_id' (from backend alias) NOT 'scribe.id'
+                    onClick={() => verifyMutation.mutate({ scribeId: scribe.scribe_id, status: true })}
                     className="flex-1 md:flex-none bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                   >
                     <UserCheck size={16} /> Approve
                   </button>
                   <button 
-                    onClick={() => verifyMutation.mutate({ scribeId: scribe.id, status: false })}
+                    onClick={() => verifyMutation.mutate({ scribeId: scribe.scribe_id, status: false })}
                     className="flex-1 md:flex-none bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
                   >
                     <UserX size={16} />

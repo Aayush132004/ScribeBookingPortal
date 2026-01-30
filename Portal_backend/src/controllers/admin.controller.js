@@ -26,7 +26,7 @@ export const loadScribes = async (req, res) => {
     const isVerified = verified === "true";
     const offset = (pageNum - 1) * limit;
 
-    // ⚠️ LIMIT & OFFSET injected (MySQL safe pattern)
+    // ⚠️ FIXED: Changed s.created_at to u.created_at
     const query = `
       SELECT
         s.id AS scribe_id,
@@ -40,14 +40,16 @@ export const loadScribes = async (req, res) => {
         u.aadhaar_card_url,  
         s.is_verified,
         s.qualification_doc_url,
-        s.created_at
+        u.created_at
       FROM scribes s
       JOIN users u ON u.id = s.user_id
       WHERE s.is_verified = ?
-      ORDER BY s.created_at DESC
+      ORDER BY u.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
+    // Note: execute doesn't work well with template literal injected LIMIT/OFFSET in some drivers, 
+    // but works here if valid numbers. ideally use ? for limit/offset too.
     const [scribes] = await conn.execute(query, [isVerified]);
 
     return res.status(200).json({

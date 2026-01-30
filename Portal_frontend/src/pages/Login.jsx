@@ -20,15 +20,23 @@ const Login = () => {
 
     try {
       // Matches the logic in your auth.controller.js
-      const response = await api.post('/login', { identifier, password });
+      const response = await api.post('/auth/login', { identifier, password });
       
-      const userData = { role: response.data.role };
+      // FIX 1: Save the FULL user object (id, name, role) so Navbar works
+      const userData = response.data.user; 
+      console.log("response is",response)
       login(userData);
 
-      // Redirect based on role defined in backend
-      if (userData.role === 'STUDENT') navigate('/student/dashboard');
-      else if (userData.role === 'SCRIBE') navigate('/scribe/dashboard');
-      else navigate('/');
+      // FIX 2: Add specific redirect for ADMIN role
+      if (userData.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (userData.role === 'STUDENT') {
+        navigate('/student/dashboard');
+      } else if (userData.role === 'SCRIBE') {
+        navigate('/scribe/dashboard');
+      } else {
+        navigate('/');
+      }
       
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -48,7 +56,7 @@ const Login = () => {
         {error && (
           <div 
             className="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 flex items-center gap-3"
-            role="alert" // Accessibility: ARIA alert for immediate SR notification
+            role="alert"
           >
             <AlertCircle size={20} />
             <span className="font-medium">{error}</span>

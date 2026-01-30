@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { User, Loader2, AlertCircle } from 'lucide-react';
 import api from '../api/axios';
 import { uploadToCloudinary } from '../utils/uploadFile';
+
 import { useAccessibility } from '../context/AccessibilityContext';
 
 const StudentRegister = () => {
@@ -68,6 +69,7 @@ const StudentRegister = () => {
   const btnClass = highContrast ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-primary text-white hover:bg-primary-dark";
 
   return (
+    
     <div className={`max-w-4xl mx-auto py-10 px-4 ${highContrast ? 'bg-black min-h-screen' : ''}`}>
       <div className={`shadow-xl rounded-2xl p-8 border ${bgClass}`}>
         <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
@@ -134,6 +136,7 @@ const StudentRegister = () => {
         </form>
       </div>
     </div>
+
   );
 };
 

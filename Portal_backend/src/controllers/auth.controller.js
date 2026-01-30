@@ -55,9 +55,7 @@ export const studentRegister = async (req, res) => {
     email = email.trim().toLowerCase();
     phone = phone.trim();
 
-
-
-    /*  Allowed value validation */
+    /* Allowed value validation */
     if (!HIGHEST_QUALIFICATIONS.includes(highest_qualification)) {
       return res.status(400).json({
         message: "Invalid highest qualification value"
@@ -72,8 +70,8 @@ export const studentRegister = async (req, res) => {
     }
     //State Check
    if (!Object.hasOwn(DISTRICTS, state)) {
-  return res.status(400).json({ message: "Invalid State" });
-}
+      return res.status(400).json({ message: "Invalid State" });
+    }
 
     //District Check
     if(!DISTRICTS[state].includes(district)){
@@ -82,8 +80,6 @@ export const studentRegister = async (req, res) => {
         });
     }
   
-  
-//Beginning Transaction so both table updation iff occur not one of student and user
     await conn.beginTransaction();
 
     /* 4️⃣ Uniqueness check */
@@ -91,7 +87,7 @@ export const studentRegister = async (req, res) => {
       "SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1",
       [email, phone]
     );
-   //already existing record of student
+   
     if (existing.length > 0) {
       await conn.rollback();
       return res.status(409).json({
@@ -127,7 +123,7 @@ export const studentRegister = async (req, res) => {
     );
 
     const userId = userResult.insertId;
-    const user = userResult[0];
+    // REMOVED: const user = userResult[0]; // This was undefined
 
     /* 7️⃣ Insert into students */
     await conn.execute(
@@ -143,11 +139,12 @@ export const studentRegister = async (req, res) => {
     await conn.commit();
 
     try {
+          // FIX: Use the variables directly instead of user object
           await upsertStreamUser({
                 id: userId.toString(),
-                first_name: user.first_name,
-                last_name : user.last_name,
-                email : user.email,
+                first_name: first_name,
+                last_name : last_name,
+                email : email,
             });
             console.log('Stream user created successfully for:', userId);
         } catch (err) {
@@ -193,26 +190,17 @@ export const scribeRegister = async (req, res) => {
       languages_known
     } = req.body;
 
+    // ... (Validations are fine) ...
     /* 1️⃣ Required validation */
     if (
-      !first_name ||
-      !email ||
-      !phone ||
-      !password ||
-      !state ||
-      !district ||
-      !city ||
-      !pincode ||
-      !highest_qualification ||
-      !qualification_doc_url ||
-      !languages_known ||
-      !Array.isArray(languages_known) ||
-      languages_known.length === 0
+      !first_name || !email || !phone || !password || !state || !district ||
+      !city || !pincode || !highest_qualification || !qualification_doc_url ||
+      !languages_known || !Array.isArray(languages_known) || languages_known.length === 0
     ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    /* 2️⃣ Normalize inputs */
+    // ... (Normalizations are fine) ...
     email = email.trim().toLowerCase();
     phone = phone.trim();
     state = state.trim().toLowerCase();
@@ -220,41 +208,31 @@ export const scribeRegister = async (req, res) => {
     city = city.trim();
     languages_known = languages_known.map(l => l.trim().toLowerCase());
 
-    /* 3️⃣ Validate qualification */
     if (!HIGHEST_QUALIFICATIONS.includes(highest_qualification)) {
       return res.status(400).json({ message: "Invalid highest qualification" });
     }
-
-    /* 4️⃣ Validate state & district */
     if (!DISTRICTS[state]) {
       return res.status(400).json({ message: "Invalid State" });
     }
-  
     if (!DISTRICTS[state].includes(district)) {
-      
       return res.status(400).json({ message: "Invalid District" });
     }
-
-    /* 5️⃣ Validate languages */
     for (const lang of languages_known) {
       if (!ALLOWED_LANGUAGES.includes(lang)) {
         return res.status(400).json({ message: `Invalid language: ${lang}` });
       }
     }
 
-    /* 6️⃣ Uniqueness check */
     const [existing] = await conn.execute(
       "SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1",
       [email, phone]
     );
-
     if (existing.length > 0) {
       return res.status(409).json({ message: "Email or phone already registered" });
     }
 
     await conn.beginTransaction();
 
-    /* 7️⃣ Hash password */
     const hashedPassword = await bcrypt.hash(password, 10);
 
     /* 8️⃣ Insert into users */
@@ -282,7 +260,7 @@ export const scribeRegister = async (req, res) => {
     );
 
     const userId = userResult.insertId;
-    const user= userResult[0];
+    // REMOVED: const user= userResult[0]; // This was undefined
 
     /* 9️⃣ Insert into scribes */
     const [scribeResult] = await conn.execute(
@@ -305,11 +283,12 @@ export const scribeRegister = async (req, res) => {
     await conn.commit();
 
      try {
+          // FIX: Use variables directly
           await upsertStreamUser({
                 id: userId.toString(),
-                first_name: user.first_name,
-                last_name : user.last_name,
-                email : user.email,
+                first_name: first_name,
+                last_name : last_name,
+                email : email,
             });
             console.log('Stream user created successfully for:', userId);
         } catch (err) {
@@ -331,6 +310,8 @@ export const scribeRegister = async (req, res) => {
   }
 };
 
+// ... Login and Logout functions are fine as they are ...
+// ... imports and register functions remain the same ...
 
 ///////login//////////
 export const login = async (req, res) => {
@@ -347,8 +328,9 @@ export const login = async (req, res) => {
     const isEmail = identifier.includes("@");
     const field = isEmail ? "email" : "phone";
 
+    // --- FIX 1: Select first_name, last_name, and profile_image_url ---
     const [users] = await conn.execute(
-      `SELECT id, password_hash, role, is_active
+      `SELECT id, first_name, last_name, profile_image_url, password_hash, role, is_active
        FROM users
        WHERE ${field} = ? AND is_active = TRUE
        LIMIT 1`,
@@ -391,9 +373,16 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
+    // --- FIX 2: Return the full user object so Frontend works ---
     return res.status(200).json({
       message: "Login successful",
-      role: user.role
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        profile_image_url: user.profile_image_url
+      }
     });
 
   } catch (err) {
@@ -404,7 +393,8 @@ export const login = async (req, res) => {
   }
 };
 
-//////logout//////
+// ... logout function remains the same ...
+
 export const logout = async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -416,14 +406,3 @@ export const logout = async (req, res) => {
     message: "Logout successful"
   });
 };
-
-
-
-
-
-
-
-
-
-
-
