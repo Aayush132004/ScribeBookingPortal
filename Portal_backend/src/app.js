@@ -18,7 +18,7 @@ const app = express();
 /* ===== MIDDLEWARE ===== */
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend
+    origin: process.env.VERCEL_FRONTEND_URL || "http://localhost:5173", // frontend
     credentials: true,              // allow cookies if needed
   })
 );
