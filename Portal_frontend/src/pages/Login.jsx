@@ -1,83 +1,107 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, Phone, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 const Login = () => {
-  const [identifier, setIdentifier] = useState(''); // Email or Phone
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const { login } = useAuth();
+  const { t, highContrast } = useAccessibility();
   const navigate = useNavigate();
+
+  const validate = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    // 1. Determine if input is likely an email or phone based on characters
+    const hasLetters = /[a-zA-Z]/.test(identifier);
+    const hasAt = identifier.includes('@');
+
+    if (hasAt || hasLetters) {
+      // Treat as Email
+      if (!emailRegex.test(identifier)) {
+        setError("Please enter a valid email address.");
+        return false;
+      }
+    } else {
+      // Treat as Phone
+      if (!phoneRegex.test(identifier)) {
+        setError("Phone number must be exactly 10 digits.");
+        return false;
+      }
+    }
+
+    // 2. Simplified Password Check for Login
+    if (!password) {
+      setError("Password is required.");
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     setError('');
     setLoading(true);
 
     try {
-      // Matches the logic in your auth.controller.js
       const response = await api.post('/auth/login', { identifier, password });
+      login(response.data.user);
+      const role = response.data.user.role;
       
-      // FIX 1: Save the FULL user object (id, name, role) so Navbar works
-      const userData = response.data.user; 
-      console.log("response is",response)
-      login(userData);
-
-      // FIX 2: Add specific redirect for ADMIN role
-      if (userData.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else if (userData.role === 'STUDENT') {
-        navigate('/student/dashboard');
-      } else if (userData.role === 'SCRIBE') {
-        navigate('/scribe/dashboard');
-      } else {
-        navigate('/');
-      }
+      // Redirect based on role
+      if (role === 'ADMIN') navigate('/admin/dashboard');
+      else if (role === 'STUDENT') navigate('/student/dashboard');
+      else if (role === 'SCRIBE') navigate('/scribe/dashboard');
+      else navigate('/');
       
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
+    } finally { 
+      setLoading(false); 
     }
   };
 
+  // Accessibility Styles
+  const bgClass = highContrast ? "bg-black border-2 border-yellow-400 shadow-none" : "bg-white border-slate-200 shadow-lg";
+  const textClass = highContrast ? "text-yellow-400" : "text-slate-900";
+  const inputContainerClass = highContrast 
+    ? "border-2 border-yellow-400 bg-black" 
+    : "border-2 border-slate-200 focus-within:border-primary bg-white";
+  const iconClass = highContrast ? "text-yellow-400" : "text-slate-400";
+
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-slate-200">
+    <div className={`min-h-[80vh] flex items-center justify-center px-4 ${highContrast ? 'bg-black' : ''}`}>
+      <div className={`max-w-md w-full rounded-xl p-8 border ${bgClass}`}>
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-900">Welcome Back</h2>
-          <p className="text-slate-600 mt-2">Sign in to manage your scribe bookings</p>
+          <h2 className={`text-3xl font-bold ${textClass}`}>{t.nav.login}</h2>
         </div>
 
         {error && (
-          <div 
-            className="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 flex items-center gap-3"
-            role="alert"
-          >
-            <AlertCircle size={20} />
-            <span className="font-medium">{error}</span>
+          <div className="mb-6 p-4 bg-red-900/20 border-l-4 border-red-600 text-red-500 flex items-center gap-3" role="alert">
+            <AlertCircle size={20} /> <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="identifier" className="block text-sm font-semibold text-slate-700 mb-1">
-              Email or Phone Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Mail size={18} />
-              </div>
+            <label className={`block text-sm font-bold mb-1 ${textClass}`}>Email / Phone</label>
+            <div className={`relative flex items-center rounded-lg overflow-hidden transition-colors ${inputContainerClass}`}>
+              <Mail className={`absolute left-3 ${iconClass}`} size={18} />
               <input
-                id="identifier"
                 type="text"
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="Enter your email or phone"
+                placeholder="Enter email or phone"
+                className={`block w-full pl-10 pr-3 py-3 bg-transparent outline-none ${highContrast ? 'text-yellow-400 placeholder:text-yellow-700' : 'text-slate-900'}`}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />
@@ -85,46 +109,37 @@ const Login = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Lock size={18} />
-              </div>
+            <label className={`block text-sm font-bold mb-1 ${textClass}`}>Password</label>
+            <div className={`relative flex items-center rounded-lg overflow-hidden transition-colors ${inputContainerClass}`}>
+              <Lock className={`absolute left-3 ${iconClass}`} size={18} />
               <input
-                id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="••••••••"
+                className={`block w-full pl-10 pr-12 py-3 bg-transparent outline-none ${highContrast ? 'text-yellow-400 placeholder:text-yellow-700' : 'text-slate-900'}`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute right-3 focus:outline-none ${highContrast ? 'text-yellow-400' : 'text-slate-400 hover:text-primary'}`}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 transition-colors"
+            className={`w-full py-3 rounded-lg font-black uppercase tracking-widest transition-transform active:scale-95 
+              ${highContrast ? 'bg-yellow-400 text-black hover:bg-yellow-300' : 'bg-primary text-white hover:bg-primary-dark'}`}
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              'Sign In'
-            )}
+            {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t.nav.login}
           </button>
         </form>
-
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-sm text-slate-600">
-            Don't have an account? <br className="sm:hidden" />
-            <Link to="/register-select" className="font-bold text-primary hover:text-primary-dark underline underline-offset-4">
-              Register as Student or Scribe
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

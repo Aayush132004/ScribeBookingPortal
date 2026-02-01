@@ -52,21 +52,12 @@ export const createExamRequest = async (req, res) => {
     await conn.beginTransaction();
 
     // create exam request
-    const [result] = await conn.execute(
-      `INSERT INTO exam_requests
-       (student_id, student_name, exam_date, exam_time, state, district, city,language)
-       VALUES (?, ?, ?, ?, ?, ?, ?,?)`,
-      [
-        studentId,
-        "student", // snapshot name (can enhance later)
-        date,
-        time || null,
-        state,
-        district,
-        city,
-        language
-      ]
-    );
+  const [result] = await conn.execute(
+    `INSERT INTO exam_requests
+      (student_id, student_name, exam_date, exam_time, state, district, city, language, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'INCOMPLETE')`, // 🟢 CHANGED FROM 'OPEN'
+    [studentId, "student", date, time || null, state, district, city, language]
+  );
 
     const examRequestId = result.insertId;
 
@@ -109,82 +100,364 @@ export const createExamRequest = async (req, res) => {
   }
 };
 
+
+// export const createExamRequest = async (req, res) => {
+//   const conn = await pool.getConnection();
+
+//   try {
+//     const userId = req.user.user_id;
+//     let { date, time, state, district, city, language } = req.body;
+
+//     // ... (keep your existing validation and normalization code here) ...
+
+//     // 1. Search for available scribes FIRST using the correct column names
+//     const [scribes] = await conn.execute(
+//       `SELECT 
+//          s.id AS scribe_id, 
+//          u.first_name, 
+//          u.last_name 
+//        FROM scribes s
+//        JOIN users u ON u.id = s.user_id
+//        JOIN scribe_languages sl ON s.id = sl.scribe_id
+//        WHERE s.is_verified = TRUE
+//          AND u.state = ?
+//          AND u.district = ?
+//          AND sl.language = ?
+//          AND s.id NOT IN (
+//            SELECT scribe_id FROM scribe_unavailability WHERE date = ?
+//          )
+//        LIMIT 10`,
+//       [state, district, language, date]
+//     );
+
+//     // 2. If no scribes found, return error and do not insert into DB
+//     if (scribes.length === 0) {
+//       conn.release();
+//       return res.status(404).json({ 
+//         message: "No verified scribes found for your selected location and language." 
+//       });
+//     }
+
+//     // ... (keep the rest of the function to insert the request and commit) ...
+
+//   } catch (err) {
+//     if (conn) await conn.rollback();
+//     console.error("Create request error:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   } finally {
+//     conn.release();
+//   }
+// };
+
+// export const loadScribes = async (req, res) => {
+//   const conn = await pool.getConnection();
+
+//   try {
+//     const { examRequestId, page = 1 } = req.query;
+//     const limit = 5; // Number of scribes per page
+//     const pageNum = Number(page);
+
+//     if (!examRequestId) return res.status(400).json({ message: "Request ID required" });
+
+//     // 1. Get Exam Location details
+//     const [requests] = await conn.execute(
+//       `SELECT state, district, exam_date FROM exam_requests WHERE id = ?`,
+//       [examRequestId]
+//     );
+
+//     if (!requests.length) return res.status(404).json({ message: "Request not found" });
+
+//     let { state, district, exam_date } = requests[0];
+    
+//     // Normalize strings for comparison
+//     state = state.trim().toLowerCase();
+//     district = district.trim().toLowerCase();
+    
+//     // Format date for SQL
+//     const examDate = exam_date instanceof Date 
+//       ? exam_date.toISOString().slice(0, 10) 
+//       : exam_date;
+
+//     // 2. THE SORTING QUERY
+//     const offset = (pageNum - 1) * limit;
+
+//     const query = `
+//       SELECT 
+//         s.id AS scribe_id, 
+//         u.first_name, 
+//         u.last_name, 
+//         u.state, 
+//         u.district, 
+//         u.city,
+//         s.avg_rating, 
+//         s.total_ratings,
+//         -- 🟢 PRIORITY LOGIC
+//         CASE 
+//           WHEN LOWER(u.district) = ? AND LOWER(u.state) = ? THEN 1  -- Same District & State
+//           WHEN LOWER(u.state) = ? THEN 2                            -- Same State (Diff District)
+//           ELSE 3                                                    -- Different State (Far)
+//         END AS priority
+//       FROM scribes s
+//       JOIN users u ON u.id = s.user_id
+//       WHERE s.is_verified = TRUE
+//         -- 🟢 FILTER: Only show scribes from same state? 
+//         -- Remove the line below if you want to show scribes from ALL India
+//         AND LOWER(u.state) = ? 
+        
+//         -- Check Availability
+//         AND s.id NOT IN (
+//           SELECT scribe_id FROM scribe_unavailability WHERE date = ?
+//         )
+//       ORDER BY priority ASC, s.avg_rating DESC  -- Sort by Location, then by Rating
+//       LIMIT ${limit} OFFSET ${offset}
+//     `;
+
+//     // Params: [district, state, state, state (for filter), examDate]
+//     const [scribes] = await conn.execute(query, [district, state, state, state, examDate]);
+
+//     // 3. Return Data
+//     return res.status(200).json({
+//       page: pageNum,
+//       scribes,
+//       has_more: scribes.length === limit // If we got full limit, assume more exist
+//     });
+
+//   } catch (err) {
+//     console.error("Load scribes error:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   } finally {
+//     conn.release();
+//   }
+// };
+
+// export const getRequests = async (req, res) => {
+//   const conn = await pool.getConnection();
+
+//   try {
+//     const userId = req.user.user_id;
+//     const { status, page = 1 } = req.query;
+
+//     const limit = 10;
+//     const pageNum = Number(page);
+
+//     if (isNaN(pageNum) || pageNum < 1) {
+//       return res.status(400).json({ message: "Invalid page number" });
+//     }
+
+//     if (status && !ALLOWED_STATUSES.includes(status)) {
+//       return res.status(400).json({
+//         message: "Invalid status filter"
+//       });
+//     }
+
+//     const offset = (pageNum - 1) * limit;
+
+//     // get student id
+//     const [students] = await conn.execute(
+//       "SELECT id FROM students WHERE user_id = ?",
+//       [userId]
+//     );
+
+//     if (!students.length) {
+//       return res.status(403).json({
+//         message: "Student not found"
+//       });
+//     }
+
+//     const studentId = students[0].id;
+
+//     // base query
+//     let query = `
+//     SELECT 
+//       id, exam_date, exam_time, state, district, city, status, 
+//       accepted_scribe_id, scribe_name, created_at
+//     FROM exam_requests
+//     WHERE student_id = ? 
+//     AND status != 'INCOMPLETE'  -- 🟢 ADD THIS FILTER
+//   `;
+
+//     const params = [studentId];
+
+//     // optional status filter
+//     if (status) {
+//       query += ` AND status = ?`;
+//       params.push(status);
+//     }
+
+//     // inject LIMIT & OFFSET safely
+//     query += `
+//       ORDER BY created_at DESC
+//       LIMIT ${limit} OFFSET ${offset}
+//     `;
+
+//     const [requests] = await conn.execute(query, params);
+
+//     return res.status(200).json({
+//       page: pageNum,
+//       requests,
+//       has_more: requests.length === limit
+//     });
+
+//   } catch (err) {
+//     console.error("Get requests error:", err);
+//     return res.status(500).json({
+//       message: "Internal server error"
+//     });
+//   } finally {
+//     conn.release();
+//   }
+// };
+
+
+// 1. FIX: loadScribes (For Create Request - 5 scribes per page)
+// export const loadScribes = async (req, res) => {
+//   const conn = await pool.getConnection();
+
+//   try {
+//     const { examRequestId, page = 1 } = req.query;
+//     const limit = 5; // 🟢 FORCE LIMIT TO 5
+//     const pageNum = Number(page);
+
+//     if (!examRequestId) return res.status(400).json({ message: "Request ID required" });
+
+//     // Get Exam Location
+//     const [requests] = await conn.execute(
+//       `SELECT state, district, exam_date FROM exam_requests WHERE id = ?`,
+//       [examRequestId]
+//     );
+
+//     if (!requests.length) return res.status(404).json({ message: "Request not found" });
+
+//     let { state, district, exam_date } = requests[0];
+//     state = state.trim().toLowerCase();
+//     district = district.trim().toLowerCase();
+    
+//     const examDate = exam_date instanceof Date 
+//       ? exam_date.toISOString().slice(0, 10) 
+//       : exam_date;
+
+//     const offset = (pageNum - 1) * limit;
+
+//     // Sorting Logic: Priority 1 (District), Priority 2 (State), Priority 3 (Others)
+//     const query = `
+//       SELECT 
+//         s.id AS scribe_id, 
+//         u.first_name, 
+//         u.last_name, 
+//         u.state, 
+//         u.district, 
+//         u.city,
+//         s.avg_rating, 
+//         s.total_ratings,
+//         CASE 
+//           WHEN LOWER(u.district) = ? AND LOWER(u.state) = ? THEN 1 
+//           WHEN LOWER(u.state) = ? THEN 2 
+//           ELSE 3 
+//         END AS priority
+//       FROM scribes s
+//       JOIN users u ON u.id = s.user_id
+//       WHERE s.is_verified = TRUE
+//         AND LOWER(u.state) = ? 
+//         AND s.id NOT IN (
+//           SELECT scribe_id FROM scribe_unavailability WHERE date = ?
+//         )
+//       ORDER BY priority ASC, s.avg_rating DESC
+//       LIMIT ${limit + 1} OFFSET ${offset}  -- 🟢 Fetch 6 items to check if next page exists
+//     `;
+
+//     const [rows] = await conn.execute(query, [district, state, state, state, examDate]);
+
+//     // Check if we have a next page
+//     const has_more = rows.length > limit;
+//     const scribes = has_more ? rows.slice(0, limit) : rows;
+
+//     return res.status(200).json({
+//       page: pageNum,
+//       scribes,
+//       has_more 
+//     });
+
+//   } catch (err) {
+//     console.error("Load scribes error:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   } finally {
+//     conn.release();
+//   }
+// };
+
+// 2. FIX: getRequests (For Dashboard - 5 requests per page)
+
+// src/controllers/student.controller.js
+
 export const loadScribes = async (req, res) => {
   const conn = await pool.getConnection();
 
   try {
     const { examRequestId, page = 1 } = req.query;
-    const limit = 10;
-
-    if (!examRequestId) {
-      return res.status(400).json({ message: "examRequestId is required" });
-    }
-
+    const limit = 5; // 🟢 FORCE LIMIT TO 5
     const pageNum = Number(page);
-    if (isNaN(pageNum) || pageNum < 1) {
-      return res.status(400).json({ message: "Invalid page number" });
-    }
 
-    const offset = (pageNum - 1) * limit;
+    if (!examRequestId) return res.status(400).json({ message: "Request ID required" });
 
-    // get exam request
+    // 1. Get Exam Request Location
     const [requests] = await conn.execute(
-      `SELECT state, district, exam_date
-       FROM exam_requests
-       WHERE id = ?`,
+      `SELECT state, district, exam_date FROM exam_requests WHERE id = ?`,
       [examRequestId]
     );
 
-    if (!requests.length) {
-      return res.status(404).json({ message: "Exam request not found" });
-    }
+    if (!requests.length) return res.status(404).json({ message: "Request not found" });
 
     let { state, district, exam_date } = requests[0];
+    
+    // Normalize for comparison
+    state = state.trim().toLowerCase();
+    district = district.trim().toLowerCase();
 
-    const examDate =
-      exam_date instanceof Date
-        ? exam_date.toISOString().slice(0, 10)
-        : exam_date;
+    const examDate = exam_date instanceof Date 
+      ? exam_date.toISOString().slice(0, 10) 
+      : exam_date;
 
-    state = state.toLowerCase();
-    district = district.toLowerCase();
+    const offset = (pageNum - 1) * limit;
 
-    // ⚠️ LIMIT & OFFSET injected (safe)
+    // 2. QUERY with Strict Priority Logic
+    // We fetch limit + 1 (6 items) to see if page 2 exists
     const query = `
-      SELECT
-        s.id AS scribe_id,
-        u.first_name,
-        u.last_name,
-        u.state,
-        u.district,
-        CASE
-          WHEN u.state = ? AND u.district = ? THEN 1
-          WHEN u.state = ? THEN 2
-          ELSE 3
+      SELECT 
+        s.id AS scribe_id, 
+        u.first_name, 
+        u.last_name, 
+        u.state, 
+        u.district, 
+        u.city,
+        s.avg_rating, 
+        s.total_ratings,
+        CASE 
+          WHEN LOWER(TRIM(u.district)) = ? AND LOWER(TRIM(u.state)) = ? THEN 1 -- Priority 1: Same District
+          WHEN LOWER(TRIM(u.state)) = ? THEN 2                                 -- Priority 2: Same State
+          ELSE 3 
         END AS priority
       FROM scribes s
       JOIN users u ON u.id = s.user_id
       WHERE s.is_verified = TRUE
+        AND LOWER(TRIM(u.state)) = ? -- Filter by State
         AND s.id NOT IN (
-          SELECT scribe_id
-          FROM scribe_unavailability
-          WHERE date = ?
+          SELECT scribe_id FROM scribe_unavailability WHERE date = ?
         )
-      ORDER BY priority ASC
-      LIMIT ${limit} OFFSET ${offset}
+      ORDER BY priority ASC, s.avg_rating DESC
+      LIMIT ${limit + 1} OFFSET ${offset}
     `;
 
-    const [scribes] = await conn.execute(query, [
-      state,
-      district,
-      state,
-      examDate
-    ]);
+    // Params: [district, state, state, state, examDate]
+    const [rows] = await conn.execute(query, [district, state, state, state, examDate]);
+
+    // 3. Pagination Logic
+    const has_more = rows.length > limit;
+    const scribes = has_more ? rows.slice(0, limit) : rows; // Remove the 6th item if it exists
 
     return res.status(200).json({
       page: pageNum,
       scribes,
-      has_more: scribes.length === limit
+      has_more 
     });
 
   } catch (err) {
@@ -194,6 +467,7 @@ export const loadScribes = async (req, res) => {
     conn.release();
   }
 };
+// src/controllers/student.controller.js
 
 export const getRequests = async (req, res) => {
   const conn = await pool.getConnection();
@@ -202,79 +476,63 @@ export const getRequests = async (req, res) => {
     const userId = req.user.user_id;
     const { status, page = 1 } = req.query;
 
-    const limit = 10;
+    const limit = 5; 
     const pageNum = Number(page);
-
-    if (isNaN(pageNum) || pageNum < 1) {
-      return res.status(400).json({ message: "Invalid page number" });
-    }
-
-    if (status && !ALLOWED_STATUSES.includes(status)) {
-      return res.status(400).json({
-        message: "Invalid status filter"
-      });
-    }
-
     const offset = (pageNum - 1) * limit;
 
-    // get student id
-    const [students] = await conn.execute(
-      "SELECT id FROM students WHERE user_id = ?",
-      [userId]
-    );
-
-    if (!students.length) {
-      return res.status(403).json({
-        message: "Student not found"
-      });
-    }
-
+    const [students] = await conn.execute("SELECT id FROM students WHERE user_id = ?", [userId]);
+    if (!students.length) return res.status(403).json({ message: "Student not found" });
     const studentId = students[0].id;
 
-    // base query
+    // Base Query
     let query = `
-      SELECT
-        id,
-        exam_date,
-        exam_time,
-        state,
-        district,
-        city,
-        status,
-        accepted_scribe_id,
-        scribe_name,
-        created_at
-      FROM exam_requests
-      WHERE student_id = ?
+      SELECT 
+        er.id, er.exam_date, er.exam_time, er.state, er.district, er.city, er.status, 
+        er.accepted_scribe_id, er.scribe_name, er.created_at,
+        CASE WHEN r.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_rated
+      FROM exam_requests er
+      LEFT JOIN ratings r ON er.id = r.exam_request_id AND r.student_id = er.student_id
+      WHERE er.student_id = ? 
+      AND er.status != 'INCOMPLETE'
     `;
 
     const params = [studentId];
 
-    // optional status filter
+    // Status Filter (If user selects specific filter in dropdown)
     if (status) {
-      query += ` AND status = ?`;
+      query += ` AND er.status = ?`;
       params.push(status);
     }
 
-    // inject LIMIT & OFFSET safely
+    // 🟢 CUSTOM SORTING LOGIC
+    // 1. ACCEPTED, 2. OPEN, 3. COMPLETED, 4. TIMED_OUT
     query += `
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
+      ORDER BY 
+      CASE er.status
+        WHEN 'ACCEPTED' THEN 1
+        WHEN 'OPEN' THEN 2
+        WHEN 'COMPLETED' THEN 3
+        WHEN 'TIMED_OUT' THEN 4
+        ELSE 5
+      END ASC,
+      er.created_at DESC
+      LIMIT ${limit + 1} OFFSET ${offset}
     `;
 
-    const [requests] = await conn.execute(query, params);
+    const [rows] = await conn.execute(query, params);
+
+    const has_more = rows.length > limit;
+    const requests = has_more ? rows.slice(0, limit) : rows;
 
     return res.status(200).json({
       page: pageNum,
       requests,
-      has_more: requests.length === limit
+      has_more
     });
 
   } catch (err) {
     console.error("Get requests error:", err);
-    return res.status(500).json({
-      message: "Internal server error"
-    });
+    return res.status(500).json({ message: "Internal server error" });
   } finally {
     conn.release();
   }
@@ -294,9 +552,12 @@ export const sendRequestToScribes = async (req, res) => {
       });
     }
 
-    // get student id
+    // 1. Get Student ID & Name (Joined with Users table)
     const [students] = await conn.execute(
-      "SELECT id FROM students WHERE user_id = ?",
+      `SELECT s.id, u.first_name, u.last_name 
+       FROM students s
+       JOIN users u ON s.user_id = u.id
+       WHERE s.user_id = ?`,
       [userId]  
     );
 
@@ -305,10 +566,11 @@ export const sendRequestToScribes = async (req, res) => {
     }
 
     const studentId = students[0].id;
+    const studentName = `${students[0].first_name} ${students[0].last_name}`;
 
-    // verify exam request ownership & status
+    // 2. Verify exam request & Get Date/Time
     const [requests] = await conn.execute(
-      `SELECT id, status
+      `SELECT id, status, exam_date, exam_time
        FROM exam_requests
        WHERE id = ? AND student_id = ?`,
       [examRequestId, studentId]
@@ -318,15 +580,19 @@ export const sendRequestToScribes = async (req, res) => {
       return res.status(404).json({ message: "Exam request not found" });
     }
 
-    if (requests[0].status !== "OPEN") {
+    const requestDetails = requests[0];
+    const currentStatus = requestDetails.status;
+
+    // Allow 'INCOMPLETE' or 'OPEN' to proceed
+    if (currentStatus !== "OPEN" && currentStatus !== "INCOMPLETE") {
       return res.status(400).json({
-        message: "Request is no longer open"
+        message: "Request is no longer valid for sending invites"
       });
     }
 
-    // fetch valid scribes + emails
+    // 3. Fetch valid scribes + emails + names
     const [scribes] = await conn.execute(
-      `SELECT s.id AS scribe_id, u.email
+      `SELECT s.id AS scribe_id, u.email, u.first_name
        FROM scribes s
        JOIN users u ON u.id = s.user_id
        WHERE s.id IN (${scribeIds.map(() => "?").join(",")})
@@ -335,13 +601,18 @@ export const sendRequestToScribes = async (req, res) => {
     );
 
     if (scribes.length === 0) {
-      return res.status(400).json({
-        message: "No valid scribes found"
-      });
+      return res.status(400).json({ message: "No valid scribes found" });
     }
 
     await conn.beginTransaction();
 
+    // Format Date for Email
+    const formattedDate = new Date(requestDetails.exam_date).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    });
+    const formattedTime = requestDetails.exam_time || "Time TBD";
+
+    // 4. Send Invites
     for (const scribe of scribes) {
       const token = crypto.randomUUID();
 
@@ -352,23 +623,52 @@ export const sendRequestToScribes = async (req, res) => {
         [examRequestId, scribe.scribe_id, token]
       );
 
-      // 📧 SEND EMAIL (placeholder)
+      // 📧 SEND EMAIL (Updated Content)
       await sendMail({
         to: scribe.email,
-        subject: "New Scribe Request",
+        subject: `Exam Scribe Request from ${studentName}`,
         html: `
-          <p>You have received a new exam request.</p>
-          <a href="${process.env.FRONTEND_URL}/accept-request?token=${token}">
-            Accept Request
-          </a>
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 600px;">
+            <h2 style="color: #333;">Hello ${scribe.first_name},</h2>
+            <p style="font-size: 16px; color: #555;">
+              <strong>${studentName}</strong> has invited you to be their scribe for an upcoming exam.
+            </p>
+            
+            <div style="background-color: #f4f8fb; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #007bff;">
+              <p style="margin: 5px 0;"><strong>📅 Date:</strong> ${formattedDate}</p>
+              <p style="margin: 5px 0;"><strong>⏰ Time:</strong> ${formattedTime}</p>
+            </div>
+
+            <p style="color: #555;">Please log in to your dashboard to view full details and accept or decline this request.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.FRONTEND_URL}/login" 
+                 style="background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
+                 Login to Dashboard
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #999; text-align: center;">
+              This is an automated message from Scribe Portal.
+            </p>
+          </div>
         `
       });
+    }
+
+    // 5. Activate Request if needed
+    if (currentStatus === "INCOMPLETE") {
+      await conn.execute(
+        `UPDATE exam_requests SET status = 'OPEN' WHERE id = ?`,
+        [examRequestId]
+      );
     }
 
     await conn.commit();
 
     return res.status(200).json({
-      message: "Request sent to selected scribes"
+      message: "Invitations sent successfully"
     });
 
   } catch (err) {
@@ -381,7 +681,6 @@ export const sendRequestToScribes = async (req, res) => {
     conn.release();
   }
 };
-
 export const getStudentProfile = async (req, res) => {
   const conn = await pool.getConnection();
 

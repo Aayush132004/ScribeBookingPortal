@@ -8,6 +8,20 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
+        const verifyUser = async () => {
+            try {
+                const res = await api.get("/auth/check");
+                setUser(res.data.user);
+            } catch (err) {
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        verifyUser();
+    }, []);
+
+  useEffect(() => {
     // Check localStorage on load
     const storedUser = localStorage.getItem("scribe_user");
     if (storedUser) {

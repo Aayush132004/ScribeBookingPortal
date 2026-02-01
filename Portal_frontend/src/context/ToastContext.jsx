@@ -1,3 +1,4 @@
+// src/context/ToastContext.jsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { X, Video, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -8,19 +9,26 @@ export const useToast = () => useContext(ToastContext);
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'info', action = null) => {
-    const id = Date.now();
+  const addToast = useCallback((message, type = 'info', action = null, customId = null) => {
+    const id = customId || Date.now();
+    
+    // Remove existing toast with same ID (prevents duplicates)
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    
+    // Add new toast
     setToasts((prev) => [...prev, { id, message, type, action }]);
     
-    // Auto remove after 5 seconds if no action
-    if (!action) {
-      setTimeout(() => removeToast(id), 5000);
+    // Auto remove after duration based on type
+    const duration = type === 'call' ? 30000 : 5000; // 30s for calls, 5s for others
+    
+    if (!action || type !== 'call') {
+      setTimeout(() => removeToast(id), duration);
     }
   }, []);
 
-  const removeToast = (id) => {
+  const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
@@ -55,14 +63,25 @@ export const ToastProvider = ({ children }) => {
               {toast.action && (
                 <div className="mt-3 flex gap-2">
                   <button 
-                    onClick={() => { toast.action.onClick(); removeToast(toast.id); }}
-                    className="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-primary-dark focus:ring-2 focus:ring-white"
+                    onClick={() => { 
+                      toast.action.onClick(); 
+                      removeToast(toast.id); 
+                    }}
+                    className="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-primary-dark focus:ring-2 focus:ring-white transition-all"
                   >
                     {toast.action.label}
                   </button>
+                  
+                  {/* ✅ Dismiss button with optional onDismiss handler */}
                   <button 
-                    onClick={() => removeToast(toast.id)}
-                    className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-white/20"
+                    onClick={() => {
+                      // Call onDismiss if provided (for sending "Call Declined" message)
+                      if (toast.action.onDismiss) {
+                        toast.action.onDismiss();
+                      }
+                      removeToast(toast.id);
+                    }}
+                    className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-white/20 transition-all"
                   >
                     Dismiss
                   </button>
@@ -70,7 +89,17 @@ export const ToastProvider = ({ children }) => {
               )}
             </div>
 
-            <button onClick={() => removeToast(toast.id)} aria-label="Close notification">
+            <button 
+              onClick={() => {
+                // Also call onDismiss when clicking X
+                if (toast.action?.onDismiss) {
+                  toast.action.onDismiss();
+                }
+                removeToast(toast.id);
+              }} 
+              aria-label="Close notification"
+              className="hover:opacity-100 transition-opacity"
+            >
               <X size={18} className="opacity-50 hover:opacity-100" />
             </button>
           </div>

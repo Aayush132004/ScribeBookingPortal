@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AccessibilityProvider } from './context/AccessibilityContext';
 import { ToastProvider } from './context/ToastContext'; // <--- NEW IMPORT
 import GlobalCallListener from './components/GlobalCallListener'; // <--- NEW IMPORT
+import { GuestRoute } from './components/GuestRoute';
 import Layout from './components/Layout';
 
 // --- Page Imports ---
@@ -50,10 +51,12 @@ function App() {
 
           <Routes>
             {/* --- Public Routes (Now wrapped in Layout) --- */}
+            <Route element={<GuestRoute />}>
             <Route path="/login" element={<Layout><Login /></Layout>} />
             <Route path="/register-select" element={<Layout><RegisterSelect /></Layout>} />
             <Route path="/register/student" element={<Layout><StudentRegister /></Layout>} />
             <Route path="/register/scribe" element={<Layout><ScribeRegister /></Layout>} />
+            </Route>
             <Route path="/accept-request" element={<Layout><AcceptRequest /></Layout>} />
             
             {/* --- Protected Student Routes --- */}
