@@ -901,12 +901,11 @@
 
 
 /////////////////////////////////////////////////////////////////////////
-
 import crypto from "crypto";
 import { pool } from "../config/db.js";
 import { sendMail } from "../../utils/sendMail.js";
 
-// 🟢 ADDED 'INCOMPLETE' HERE
+// Ensure 'INCOMPLETE' is allowed
 const ALLOWED_STATUSES = ["INCOMPLETE", "OPEN", "ACCEPTED", "COMPLETED", "TIMED_OUT"];
 
 export const createExamRequest = async (req, res) => {
@@ -936,7 +935,7 @@ export const createExamRequest = async (req, res) => {
       return res.status(400).json({ message: "Exam date must be today or in the future" });
     }
 
-    // 🟢 1. Check for Scribes FIRST (Before creating request)
+    // 🟢 1. Check for Scribes FIRST
     const [scribes] = await conn.execute(
       `SELECT
           s.id AS scribe_id,
@@ -1097,7 +1096,6 @@ export const getRequests = async (req, res) => {
     const pageNum = Number(page);
     const offset = (pageNum - 1) * limit;
 
-    // Validate status if provided
     if (status && !ALLOWED_STATUSES.includes(status)) {
         return res.status(400).json({ message: "Invalid status filter" });
     }
@@ -1167,6 +1165,7 @@ export const sendRequestToScribes = async (req, res) => {
       return res.status(400).json({ message: "examRequestId and scribeIds are required" });
     }
 
+    // 1. Get Student ID & Name
     const [students] = await conn.execute(
       `SELECT s.id, u.first_name, u.last_name 
        FROM students s
@@ -1182,6 +1181,7 @@ export const sendRequestToScribes = async (req, res) => {
     const studentId = students[0].id;
     const studentName = `${students[0].first_name} ${students[0].last_name}`;
 
+    // 2. Verify exam request
     const [requests] = await conn.execute(
       `SELECT id, status, exam_date, exam_time
        FROM exam_requests
@@ -1200,6 +1200,7 @@ export const sendRequestToScribes = async (req, res) => {
       return res.status(400).json({ message: "Request is no longer valid" });
     }
 
+    // 3. Fetch scribes (AND Filter out duplicates)
     const [scribes] = await conn.execute(
       `SELECT s.id AS scribe_id, u.email, u.first_name
        FROM scribes s
@@ -1218,11 +1219,13 @@ export const sendRequestToScribes = async (req, res) => {
 
     await conn.beginTransaction();
 
+    // 🟢 Format Date/Time for Email
     const formattedDate = new Date(requestDetails.exam_date).toLocaleDateString('en-IN', {
       day: 'numeric', month: 'short', year: 'numeric'
     });
     const formattedTime = requestDetails.exam_time || "Time TBD";
 
+    // 4. Send Invites
     for (const scribe of scribes) {
       const token = crypto.randomUUID();
 
@@ -1233,6 +1236,7 @@ export const sendRequestToScribes = async (req, res) => {
         [examRequestId, scribe.scribe_id, token]
       );
 
+      // 📧 SEND EMAIL (Corrected Content)
       await sendMail({
         to: scribe.email,
         subject: `Exam Scribe Request from ${studentName}`,
@@ -1248,7 +1252,7 @@ export const sendRequestToScribes = async (req, res) => {
               <p style="margin: 5px 0;"><strong>⏰ Time:</strong> ${formattedTime}</p>
             </div>
 
-            <p style="color: #555;">Please log in to your dashboard to view details.</p>
+            <p style="color: #555;">Please log in to your dashboard to view details and accept the request.</p>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${process.env.FRONTEND_URL}/login" 
@@ -1265,6 +1269,7 @@ export const sendRequestToScribes = async (req, res) => {
       });
     }
 
+    // 5. Activate Request
     if (currentStatus === "INCOMPLETE") {
       await conn.execute(
         `UPDATE exam_requests SET status = 'OPEN' WHERE id = ?`,
