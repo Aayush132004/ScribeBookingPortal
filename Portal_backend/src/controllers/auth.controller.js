@@ -578,12 +578,14 @@ export const login = async (req, res) => {
 
         const field = isEmail ? "email" : "phone";
         const [users] = await pool.execute(
-            `SELECT id, first_name, last_name, profile_image_url, password_hash, role, is_active FROM users WHERE ${field} = ? AND is_active = TRUE LIMIT 1`,
+            `SELECT id, first_name, last_name, profile_image_url, password_hash, role, is_active FROM users WHERE ${field} = ? LIMIT 1`,
             [identifier]
         );
 
-        if (!users.length) return res.status(401).json({ message: "Invalid credentials" });
+        if (!users.length) return res.status(401).json({ message: "No account exists with this email/phone" });
         const user = users[0];
+
+        if (!user.is_active) return res.status(403).json({ message: "Account is disabled. Please contact admin." });
 
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) return res.status(401).json({ message: "Invalid credentials" });

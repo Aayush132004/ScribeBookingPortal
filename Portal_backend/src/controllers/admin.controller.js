@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import { sendMail } from "../../utils/sendMail.js";
 
 //by default will send 10 unverified scribes and will send more accordingly to req like verified/unverified and page no
 export const loadScribes = async (req, res) => {
@@ -197,12 +198,93 @@ export const deleteScribe = async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const { id } = req.params;
+    
+    // Get user details for email before deleting
+    const [users] = await conn.execute("SELECT u.email, u.first_name FROM users u JOIN scribes s ON u.id = s.user_id WHERE s.id = ?", [id]);
+    
+    await conn.beginTransaction();
     // Delete user (cascade will remove scribe entry)
     await conn.execute("DELETE FROM users WHERE id = (SELECT user_id FROM scribes WHERE id = ?)", [id]);
+    await conn.commit();
+
+    if (users.length) {
+      const { email, first_name } = users[0];
+      try {
+        await sendMail({
+          to: email,
+          subject: "Account Deleted by Administrator - Scribe Portal",
+          html: `<h1>Hello ${first_name},</h1><p>Your scribe account has been deleted by an administrator. If you think this is a mistake, please contact support.</p>`
+        });
+      } catch (mailErr) {
+        console.error("Mail error during admin deletion:", mailErr);
+      }
+    }
+
     res.status(200).json({ message: "Scribe deleted successfully" });
   } catch (err) {
+    if (conn) await conn.rollback();
     console.error(err);
     res.status(500).json({ message: "Error deleting scribe" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const loadAllUsers = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const { role, page = 1 } = req.query;
+    const limit = 20;
+    const offset = (Number(page) - 1) * limit;
+
+    let query = `
+      SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.role, u.created_at, u.is_active
+      FROM users u
+      WHERE u.role != 'ADMIN'
+    `;
+    const params = [];
+
+    if (role) {
+      query += " AND u.role = ?";
+      params.push(role);
+    }
+
+    query += ` ORDER BY u.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    
+    const [users] = await conn.execute(query, params);
+    res.status(200).json({ users, has_more: users.length === limit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error loading users" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const toggleUserActive = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    await conn.execute("UPDATE users SET is_active = ? WHERE id = ?", [is_active, id]);
+    res.status(200).json({ message: `User ${is_active ? 'enabled' : 'disabled'} successfully` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating user status" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    await conn.execute("DELETE FROM users WHERE id = ?", [id]);
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting user" });
   } finally {
     conn.release();
   }

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Loader2, BookOpen } from 'lucide-react';
 import api from '../../api/axios';
+import { useAccessibility } from '../../context/AccessibilityContext';
+import Navbar from '../../components/Navbar';
 
 const AcceptRequest = () => {
+  const { t } = useAccessibility();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
@@ -15,7 +18,7 @@ const AcceptRequest = () => {
     const processAcceptance = async () => {
       if (!token) {
         setStatus('error');
-        setMessage('Invalid or missing acceptance token.');
+        setMessage(t.acceptRequest?.invalidToken || 'Invalid or missing acceptance token.');
         return;
       }
 
@@ -23,10 +26,10 @@ const AcceptRequest = () => {
         // Matches scribe.controller.js -> acceptExamRequest
         const response = await api.post('/scribe/acceptRequest', { token });
         setStatus('success');
-        setMessage(response.data.message || 'Exam accepted successfully!');
+        setMessage(response.data.message || t.acceptRequest?.success || 'Exam accepted successfully!');
       } catch (err) {
         setStatus('error');
-        setMessage(err.response?.data?.message || 'Failed to accept the request. It may have expired or been taken by another scribe.');
+        setMessage(err.response?.data?.message || t.acceptRequest?.taken || 'Failed to accept the request. It may have expired or been taken by another scribe.');
       }
     };
 
@@ -47,8 +50,8 @@ const AcceptRequest = () => {
         {status === 'loading' && (
           <div className="space-y-4">
             <Loader2 className="animate-spin mx-auto text-primary" size={40} />
-            <h2 className="text-xl font-bold text-slate-900">Processing Acceptance...</h2>
-            <p className="text-slate-500 text-sm">Please wait while we confirm your booking and update your schedule.</p>
+            <h2 className="text-xl font-bold text-slate-900">{t.acceptRequest?.processing || "Processing Acceptance..."}</h2>
+            <p className="text-slate-500 text-sm">{t.acceptRequest?.wait || "Please wait while we confirm your booking and update your schedule."}</p>
           </div>
         )}
 
@@ -57,14 +60,14 @@ const AcceptRequest = () => {
             <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle size={28} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Confirmed!</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{t.acceptRequest?.success || "Confirmed!"}</h2>
             <p className="text-slate-600">{message}</p>
             <div className="pt-6">
               <button 
                 onClick={() => navigate('/scribe/dashboard')}
                 className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition-all"
               >
-                View My Dashboard
+                {t.acceptRequest?.dashboardBtn || "View My Dashboard"}
               </button>
             </div>
           </div>
@@ -75,14 +78,14 @@ const AcceptRequest = () => {
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
               <AlertCircle size={28} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Acceptance Failed</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{t.acceptRequest?.failed || "Acceptance Failed"}</h2>
             <p className="text-slate-600 text-sm">{message}</p>
             <div className="pt-6 space-y-3">
               <button 
                 onClick={() => navigate('/scribe/dashboard')}
                 className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all"
               >
-                Back to Dashboard
+                {t.acceptRequest?.backBtn || "Back to Dashboard"}
               </button>
             </div>
           </div>

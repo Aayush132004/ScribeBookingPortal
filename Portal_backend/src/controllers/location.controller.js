@@ -26,9 +26,24 @@ export const getMetadata = async (req, res) => {
         // Returns qualifications and languages for the dropdowns
         return res.status(200).json({
             qualifications: HIGHEST_QUALIFICATIONS,
-            languages: ALLOWED_LANGUAGES
+            languages: ALLOWED_LANGUAGES,
+            states: STATES
         });
     } catch (err) {
         return res.status(500).json({ message: "Error fetching metadata" });
+    }
+};
+
+export const getAllDistricts = async (req, res) => {
+    try {
+        const allDistricts = [];
+        for (const [state, districts] of Object.entries(DISTRICTS)) {
+            districts.forEach(district => {
+                allDistricts.push({ district, state });
+            });
+        }
+        return res.status(200).json(allDistricts);
+    } catch (err) {
+        return res.status(500).json({ message: "Error fetching all districts" });
     }
 };

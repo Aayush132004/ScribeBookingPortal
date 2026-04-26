@@ -1,11 +1,13 @@
 import express from "express";
 import { userMiddleware } from "../middleware/user.middleware.js";
-import { acceptExamRequest, getScribeProfile, loadStudents, loadUnavailability, setUnavailability,rejectInvite,getInvites } from "../controllers/scribe.controller.js";
+import { acceptExamRequest, getScribeProfile, loadStudents, loadUnavailability, setUnavailability,rejectInvite,getInvites,deleteScribeAccount,updateScribeProfile } from "../controllers/scribe.controller.js";
 
 
 export const scribeRoutes = express.Router();
 
 scribeRoutes.get("/profile",userMiddleware,getScribeProfile)
+scribeRoutes.put("/profile",userMiddleware,updateScribeProfile)
+scribeRoutes.delete("/profile",userMiddleware,deleteScribeAccount)
 
 scribeRoutes.post("/acceptRequest",userMiddleware,acceptExamRequest)
 

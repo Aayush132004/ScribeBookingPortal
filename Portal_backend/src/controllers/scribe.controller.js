@@ -1,8 +1,58 @@
 import { pool } from "../config/db.js";
+import { sendMail } from "../../utils/sendMail.js";
+import { streamClient } from "../config/stream.js";
 
 /**
  * Get Scribe Profile & Stats
  */
+// export const getScribeProfile = async (req, res) => {
+//     const conn = await pool.getConnection();
+//     try {
+//         const userId = req.user.user_id;
+
+//         const [profileRows] = await conn.execute(
+//             `SELECT 
+//                 u.first_name, u.last_name, u.email, u.phone, u.state, u.district, 
+//                 u.city, u.highest_qualification, u.profile_image_url,
+//                 s.id AS scribe_id, s.is_verified, s.avg_rating, s.total_ratings
+//              FROM users u
+//              JOIN scribes s ON u.id = s.user_id
+//              WHERE u.id = ?`,
+//             [userId]
+//         );
+
+//         if (!profileRows.length) {
+//             return res.status(404).json({ message: "Scribe profile not found" });
+//         }
+
+//         const profile = profileRows[0];
+
+//         // Fetch exam stats
+//         const [statsRows] = await conn.execute(
+//             `SELECT 
+//                 COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS total_exams,
+//                 COUNT(CASE WHEN status = 'ACCEPTED' THEN 1 END) AS upcoming_exams
+//              FROM exam_requests 
+//              WHERE accepted_scribe_id = ?`,
+//             [profile.scribe_id]
+//         );
+
+//         return res.status(200).json({
+//             profile,
+//             stats: statsRows[0]
+//         });
+//     } catch (err) {
+//         console.error("Get scribe profile error:", err);
+//         return res.status(500).json({ message: "Internal server error" });
+//     } finally {
+//         conn.release();
+//     }
+// };
+
+/**
+ * Accept Exam Request via Token
+ */
+
 export const getScribeProfile = async (req, res) => {
     const conn = await pool.getConnection();
     try {
@@ -11,7 +61,9 @@ export const getScribeProfile = async (req, res) => {
         const [profileRows] = await conn.execute(
             `SELECT 
                 u.first_name, u.last_name, u.email, u.phone, u.state, u.district, 
-                u.city, u.highest_qualification, u.profile_image_url,
+                u.city, u.highest_qualification, u.profile_image_url, 
+                u.pincode, u.aadhaar_card_url, u.created_at AS joined_at,
+                s.qualification_doc_url, 
                 s.id AS scribe_id, s.is_verified, s.avg_rating, s.total_ratings
              FROM users u
              JOIN scribes s ON u.id = s.user_id
@@ -46,10 +98,6 @@ export const getScribeProfile = async (req, res) => {
         conn.release();
     }
 };
-
-/**
- * Accept Exam Request via Token
- */
 export const acceptExamRequest = async (req, res) => {
     const conn = await pool.getConnection();
     try {
@@ -109,6 +157,38 @@ export const acceptExamRequest = async (req, res) => {
 
         // 6. Mark token as used
         await conn.execute(`UPDATE request_invites SET used = TRUE WHERE token = ?`, [token]);
+
+        // --- STREAM CHAT SYNC ---
+        try {
+            // Get Student User ID
+            const [studentRows] = await conn.execute(
+                "SELECT u.id FROM users u JOIN students s ON s.user_id = u.id WHERE s.id = (SELECT student_id FROM exam_requests WHERE id = ?)",
+                [exam_request_id]
+            );
+            
+            // Get Scribe User ID
+            const [scribeUserRows] = await conn.execute("SELECT user_id FROM scribes WHERE id = ?", [scribe_id]);
+
+            if (studentRows.length && scribeUserRows.length) {
+                const studentUserId = studentRows[0].id.toString();
+                const scribeUserId = scribeUserRows[0].user_id.toString();
+
+                const channel = streamClient.channel('messaging', `exam-${exam_request_id}`, {
+                    members: [studentUserId, scribeUserId],
+                    created_by_id: studentUserId
+                });
+                await channel.create();
+                await channel.addMembers([studentUserId, scribeUserId]);
+                
+                // Send system message to trigger real-time UI updates
+                await channel.sendMessage({ 
+                    text: `Chat started! ${scribeName} has accepted your request.`,
+                    type: 'system' 
+                });
+            }
+        } catch (streamErr) {
+            console.error("Stream sync failed after acceptance:", streamErr);
+        }
 
         await conn.commit();
         return res.status(200).json({ message: "Exam accepted successfully" });
@@ -286,6 +366,68 @@ export const rejectInvite = async (req, res) => {
     } catch (err) {
         console.error("Reject error:", err);
         return res.status(500).json({ message: "Internal server error" });
+    } finally {
+        conn.release();
+    }
+};
+
+export const deleteScribeAccount = async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        const userId = req.user.user_id;
+        
+        // Get user details for email
+        const [users] = await conn.execute("SELECT email, first_name FROM users WHERE id = ?", [userId]);
+        if (!users.length) return res.status(404).json({ message: "User not found" });
+        
+        const { email, first_name } = users[0];
+
+        await conn.beginTransaction();
+        await conn.execute("DELETE FROM users WHERE id = ?", [userId]);
+        await conn.commit();
+
+        try {
+            await sendMail({
+                to: email,
+                subject: "Account Deleted - Scribe Portal",
+                html: `<h1>Hello ${first_name},</h1><p>Your scribe account has been successfully deleted. Thank you for your service.</p>`
+            });
+        } catch (mailErr) {
+            console.error("Mail error during deletion:", mailErr);
+        }
+
+        res.status(200).json({ message: "Account deleted successfully" });
+    } catch (err) {
+        if (conn) await conn.rollback();
+        console.error(err);
+        res.status(500).json({ message: "Error deleting account" });
+    } finally {
+        conn.release();
+    }
+};
+
+export const updateScribeProfile = async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        const userId = req.user.user_id;
+        const { first_name, last_name, phone, state, district, city, pincode, highest_qualification, profile_image_url } = req.body;
+
+        await conn.beginTransaction();
+
+        await conn.execute(
+            `UPDATE users SET 
+                first_name = ?, last_name = ?, phone = ?, state = ?, district = ?, city = ?, pincode = ?, 
+                highest_qualification = ?, profile_image_url = ?
+            WHERE id = ?`,
+            [first_name, last_name, phone, state, district, city, pincode, highest_qualification, profile_image_url || null, userId]
+        );
+
+        await conn.commit();
+        res.status(200).json({ message: "Profile updated successfully" });
+    } catch (err) {
+        if (conn) await conn.rollback();
+        console.error(err);
+        res.status(500).json({ message: "Error updating profile" });
     } finally {
         conn.release();
     }

@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   if (loading) return null; // Prevent flickering
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading: loading }}>
       {children}
     </AuthContext.Provider>
   );

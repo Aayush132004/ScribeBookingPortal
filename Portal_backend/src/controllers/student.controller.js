@@ -1437,7 +1437,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 import crypto from "crypto";
 import { pool } from "../config/db.js";
-// import { sendMail } from "../../utils/sendMail.js"; // 🔴 EMAIL DISABLED TO PREVENT TIMEOUTS
+import { sendMail } from "../../utils/sendMail.js"; 
 
 // Ensure 'INCOMPLETE' is allowed
 const ALLOWED_STATUSES = ["INCOMPLETE", "OPEN", "ACCEPTED", "COMPLETED", "TIMED_OUT"];
@@ -1822,6 +1822,106 @@ export const submitFeedback = async (req, res) => {
     if (conn) await conn.rollback();
     console.error("Submit feedback error:", err);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const deleteStudentAccount = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.user_id;
+    
+    // Get user details for email
+    const [users] = await conn.execute("SELECT email, first_name FROM users WHERE id = ?", [userId]);
+    if (!users.length) return res.status(404).json({ message: "User not found" });
+    
+    const { email, first_name } = users[0];
+
+    await conn.beginTransaction();
+    // Delete user (cascade will handle students and requests if set up correctly in schema, 
+    // otherwise we might need manual cleanup. Based on admin.controller.js, it seems cascade is expected)
+    await conn.execute("DELETE FROM users WHERE id = ?", [userId]);
+    await conn.commit();
+
+    try {
+      await sendMail({
+        to: email,
+        subject: "Account Deleted - Scribe Portal",
+        html: `<h1>Hello ${first_name},</h1><p>Your account has been successfully deleted from Scribe Portal. We are sorry to see you go.</p>`
+      });
+    } catch (mailErr) {
+      console.error("Mail error during deletion:", mailErr);
+    }
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    if (conn) await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "Error deleting account" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const cancelExamRequest = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.user_id;
+    const { requestId } = req.body;
+
+    const [students] = await conn.execute("SELECT id FROM students WHERE user_id = ?", [userId]);
+    if (!students.length) return res.status(403).json({ message: "Student not found" });
+    const studentId = students[0].id;
+
+    // Check if request is OPEN or INCOMPLETE (not yet accepted)
+    const [requests] = await conn.execute(
+      "SELECT id, status FROM exam_requests WHERE id = ? AND student_id = ?",
+      [requestId, studentId]
+    );
+
+    if (!requests.length) return res.status(404).json({ message: "Request not found" });
+    if (requests[0].status === 'ACCEPTED' || requests[0].status === 'COMPLETED') {
+      return res.status(400).json({ message: "Cannot cancel an accepted or completed request" });
+    }
+
+    await conn.execute("DELETE FROM exam_requests WHERE id = ?", [requestId]);
+    res.status(200).json({ message: "Request cancelled successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error cancelling request" });
+  } finally {
+    conn.release();
+  }
+};
+
+export const updateStudentProfile = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.user_id;
+    const { first_name, last_name, phone, state, district, city, pincode, highest_qualification, current_class_year, disability_type, profile_image_url } = req.body;
+
+    await conn.beginTransaction();
+
+    await conn.execute(
+      `UPDATE users SET 
+        first_name = ?, last_name = ?, phone = ?, state = ?, district = ?, city = ?, pincode = ?, 
+        highest_qualification = ?, current_class_year = ?, profile_image_url = ? 
+      WHERE id = ?`,
+      [first_name, last_name, phone, state, district, city, pincode, highest_qualification, current_class_year, profile_image_url || null, userId]
+    );
+
+    await conn.execute(
+      "UPDATE students SET disability_type = ? WHERE user_id = ?",
+      [disability_type, userId]
+    );
+
+    await conn.commit();
+    res.status(200).json({ message: "Profile updated successfully" });
+  } catch (err) {
+    if (conn) await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "Error updating profile" });
   } finally {
     conn.release();
   }

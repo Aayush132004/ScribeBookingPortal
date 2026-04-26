@@ -5,9 +5,10 @@ export const translations = {
       studentReg: "Student Register",
       scribeReg: "Scribe Register",
       dashboard: "Dashboard",
-      logout: "Logout",
+      logout: "Sign Out",
       welcome: "Welcome,",
-      register: "Register"
+      register: "Register",
+      profile: "Profile"
     },
     common: {
       error: "Something went wrong. Please try again.",
@@ -159,6 +160,94 @@ export const translations = {
       saveBtn: "Save Date",
       listTitle: "Upcoming Unavailable Dates",
       noDates: "You are currently available for all dates."
+    },
+    admin: {
+      userManagement: "User Management",
+      monitorDesc: "Monitor and manage all students and scribes.",
+      searchPlaceholder: "Search by name or email...",
+      allRoles: "All Roles",
+      students: "Students",
+      scribes: "Scribes",
+      table: {
+        user: "User",
+        role: "Role",
+        status: "Status",
+        joined: "Joined",
+        actions: "Actions"
+      },
+      status: {
+        active: "Active",
+        disabled: "Disabled"
+      },
+      noUsers: "No users found.",
+      failedLoad: "Failed to load users.",
+      confirmDelete: "Are you sure you want to PERMANENTLY delete this user?"
+    },
+    acceptRequest: {
+      processing: "Processing Acceptance...",
+      wait: "Please wait while we confirm your booking and update your schedule.",
+      success: "Confirmed!",
+      failed: "Acceptance Failed",
+      invalidToken: "Invalid or missing acceptance token.",
+      taken: "Failed to accept the request. It may have expired or been taken by another scribe.",
+      dashboardBtn: "View My Dashboard",
+      backBtn: "Back to Dashboard"
+    },
+    feedback: {
+      title: "Rate Your Scribe",
+      subtitle: "How was your experience with the scribe for this examination?",
+      overall: "Overall Rating",
+      reviewLabel: "Write a Review (Optional)",
+      placeholder: "Tell us more about the scribe's punctuality, behavior, and assistance...",
+      submit: "Submit Feedback",
+      thankYou: "Thank You!",
+      successDesc: "Your feedback helps us maintain a high-quality community. Redirecting you to your requests...",
+      selectStars: "Please select a star rating."
+    },
+    profile: {
+      title: "User Profile",
+      edit: "Edit Profile",
+      personal: "Personal Details",
+      academic: "Academic & Professional",
+      documents: "Documents",
+      delete: "Delete Account",
+      confirmDelete: "Are you sure you want to permanently delete your account?",
+      save: "Save Changes",
+      cancel: "Cancel",
+      verification: "Verification Status",
+      verified: "Verified Professional",
+      pending: "Pending Verification",
+      noDocs: "No documents uploaded",
+      aadhaarCard: "Aadhaar Card",
+      qualificationCert: "Qualification Certificate",
+      fullIdentity: "Full Identity",
+      memberSince: "Member Since",
+      region: "Region",
+      fullAddress: "Full Address",
+      secAccount: "Secure Account",
+      secDesc: "Your personal data and documents are encrypted and only accessible to verified administrators and active exam partners.",
+      somethingWrong: "Something went wrong",
+      tryAgain: "Try Again",
+      buildingProfile: "Building Profile...",
+      viewProfile: "View Profile",
+      verifiedBadge: "Verified",
+      securityDesc: "Manage your account security and data deletion options."
+    },
+    video: {
+      incoming: "Incoming Video Call",
+      calling: "is calling you...",
+      join: "Join Video",
+      dismiss: "Dismiss",
+      ringing: "Ringing...",
+      started: "Video call started",
+      missed: "Missed video call",
+      ended: "Call ended",
+      declined: "Call declined",
+      connecting: "Establishing Secure Connection...",
+      calling_remote: "Calling...",
+      waiting: "Waiting for response...",
+      auto_hangup: "Auto-hangup in",
+      you: "You"
     }
   },
   hi: {
@@ -167,9 +256,10 @@ export const translations = {
       studentReg: "छात्र पंजीकरण",
       scribeReg: "लेखक पंजीकरण",
       dashboard: "डैशबोर्ड",
-      logout: "लॉग आउट",
+      logout: "साइन आउट",
       welcome: "स्वागत है,",
-      register: "रजिस्टर"
+      register: "रजिस्टर",
+      profile: "प्रोफ़ाइल"
     },
     common: {
       error: "कुछ गलत हो गया। कृपया पुन: प्रयास करें।",
@@ -321,6 +411,94 @@ export const translations = {
       saveBtn: "तारीख सहेजें",
       listTitle: "आगामी अनुपलब्ध तिथियां",
       noDates: "आप सभी तारीखों के लिए उपलब्ध हैं।"
+    },
+    admin: {
+      userManagement: "उपयोगकर्ता प्रबंधन",
+      monitorDesc: "सभी छात्रों और स्क्राइब की निगरानी और प्रबंधन करें।",
+      searchPlaceholder: "नाम या ईमेल द्वारा खोजें...",
+      allRoles: "सभी भूमिकाएँ",
+      students: "छात्र",
+      scribes: "स्क्राइब",
+      table: {
+        user: "उपयोगकर्ता",
+        role: "भूमिका",
+        status: "स्थिति",
+        joined: "जुड़े",
+        actions: "कार्रवाई"
+      },
+      status: {
+        active: "सक्रिय",
+        disabled: "अक्षम"
+      },
+      noUsers: "कोई उपयोगकर्ता नहीं मिला।",
+      failedLoad: "उपयोगकर्ता लोड करने में विफल।",
+      confirmDelete: "क्या आप वाकई इस उपयोगकर्ता को स्थायी रूप से हटाना चाहते हैं?"
+    },
+    acceptRequest: {
+      processing: "स्वीकृति प्रक्रिया में है...",
+      wait: "कृपया प्रतीक्षा करें जबकि हम आपकी बुकिंग की पुष्टि कर रहे हैं।",
+      success: "पुष्टि की गई!",
+      failed: "स्वीकृति विफल",
+      invalidToken: "अमान्य या अनुपलब्ध टोकन।",
+      taken: "अनुरोध स्वीकार करने में विफल। यह समाप्त हो गया हो सकता है या किसी अन्य स्क्राइब द्वारा लिया गया हो सकता है।",
+      dashboardBtn: "मेरा डैशबोर्ड देखें",
+      backBtn: "डैशबोर्ड पर वापस जाएं"
+    },
+    feedback: {
+      title: "अपने स्क्राइब को रेट करें",
+      subtitle: "इस परीक्षा के लिए स्क्राइब के साथ आपका अनुभव कैसा रहा?",
+      overall: "कुल रेटिंग",
+      reviewLabel: "समीक्षा लिखें (वैकल्पिक)",
+      placeholder: "स्क्राइब की समयबद्धता, व्यवहार और सहायता के बारे में हमें और बताएं...",
+      submit: "प्रतिक्रिया भेजें",
+      thankYou: "धन्यवाद!",
+      successDesc: "आपकी प्रतिक्रिया हमें उच्च गुणवत्ता बनाए रखने में मदद करती है। आपको आपके अनुरोधों पर पुनर्निर्देशित किया जा रहा है...",
+      selectStars: "कृपया स्टार रेटिंग चुनें।"
+    },
+    profile: {
+      title: "उपयोगकर्ता प्रोफ़ाइल",
+      edit: "प्रोफ़ाइल संपादित करें",
+      personal: "व्यक्तिगत विवरण",
+      academic: "शैक्षणिक और व्यावसायिक",
+      documents: "दस्तावेज़",
+      delete: "खाता हटाएं",
+      confirmDelete: "क्या आप वाकई अपना खाता स्थायी रूप से हटाना चाहते हैं?",
+      save: "परिवर्तन सहेजें",
+      cancel: "रद्द करें",
+      verification: "सत्यापन स्थिति",
+      verified: "सत्यापित पेशेवर",
+      pending: "सत्यापन लंबित",
+      noDocs: "कोई दस्तावेज़ अपलोड नहीं किया गया",
+      aadhaarCard: "आधार कार्ड",
+      qualificationCert: "योग्यता प्रमाण पत्र",
+      fullIdentity: "पूर्ण पहचान",
+      memberSince: "सदस्यता की तिथि",
+      region: "क्षेत्र",
+      fullAddress: "पूरा पता",
+      secAccount: "सुरक्षित खाता",
+      secDesc: "आपका व्यक्तिगत डेटा और दस्तावेज़ एन्क्रिप्टेड हैं और केवल सत्यापित प्रशासकों और सक्रिय परीक्षा भागीदारों के लिए सुलभ हैं।",
+      somethingWrong: "कुछ गलत हो गया",
+      tryAgain: "फिर से प्रयास करें",
+      buildingProfile: "प्रोफ़ाइल बन रही है...",
+      viewProfile: "प्रोफ़ाइल देखें",
+      verifiedBadge: "सत्यापित",
+      securityDesc: "अपनी खाता सुरक्षा और डेटा हटाने के विकल्पों को प्रबंधित करें।"
+    },
+    video: {
+      incoming: "आने वाली वीडियो कॉल",
+      calling: "आपको कॉल कर रहा है...",
+      join: "वीडियो जॉइन करें",
+      dismiss: "खारिज करें",
+      ringing: "रिंग हो रही है...",
+      started: "वीडियो कॉल शुरू हुई",
+      missed: "मिस्ड वीडियो कॉल",
+      ended: "कॉल समाप्त",
+      declined: "कॉल अस्वीकार",
+      connecting: "सुरक्षित कनेक्शन स्थापित हो रहा है...",
+      calling_remote: "कॉल हो रही है...",
+      waiting: "प्रतीक्षा कर रहा है...",
+      auto_hangup: "स्वतः समाप्त",
+      you: "आप"
     }
   }
 };

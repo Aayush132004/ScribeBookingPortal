@@ -1,8 +1,8 @@
 // src/pages/ChatPage.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Chat, Channel, Window, MessageList, MessageInput, Thread, useChatContext } from 'stream-chat-react';
-import { Video, Loader2, ArrowLeft, Lock } from 'lucide-react';
+import { Chat, Channel, Window, MessageList, MessageInput, Thread, useChatContext, MessageSimple, useMessageContext } from 'stream-chat-react';
+import { Video, Loader2, ArrowLeft, Lock, ShieldCheck, Phone, Check, Clock, PhoneOff, AlertTriangle, Shield } from 'lucide-react';
 import "stream-chat-react/dist/css/v2/index.css";
 import { useStreamClient } from '../../hooks/useStreamClient';
 import api from '../../api/axios';
@@ -13,22 +13,86 @@ const CustomChannelHeader = ({ channel, onVideoCall, highContrast, onBack }) => 
   const { client } = useChatContext();
   const members = Object.values(channel.state.members || {});
   const otherMember = members.find(m => m.user_id !== client.userID)?.user || {};
-  const displayName = otherMember.name || otherMember.id || "Exam Support";
+  const displayName = otherMember.name || otherMember.id || "Exam Partner";
   
   return (
-    <div className={`flex items-center justify-between px-6 py-4 z-10 ${highContrast ? "bg-black border-b-2 border-yellow-400" : "bg-white border-b border-slate-100 shadow-sm"}`}>
+    <div className={`flex items-center justify-between px-6 py-4 transition-all ${highContrast ? "bg-black border-b-2 border-yellow-400" : "bg-white border-b border-gray-100"}`}>
       <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-2 rounded-full hover:bg-slate-100"><ArrowLeft size={20}/></button>
-        <div>
-          <h1 className={`font-bold text-lg ${highContrast ? "text-yellow-400" : "text-slate-900"}`}>{displayName}</h1>
-          <div className="text-xs text-green-600 font-bold flex items-center gap-1"><Lock size={10} /> Secure</div>
+        <div className="flex items-center gap-3">
+          <div className={`h-10 w-10 rounded-2xl flex items-center justify-center font-black shadow-sm ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white'}`}>
+            {displayName[0].toUpperCase()}
+          </div>
+          <div>
+            <h1 className={`font-black text-sm md:text-base leading-none mb-1 ${highContrast ? "text-yellow-400" : "text-gray-900"}`}>
+              {displayName}
+            </h1>
+            <div className="flex items-center gap-1.5">
+               <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Online</span>
+            </div>
+          </div>
         </div>
       </div>
-      <button onClick={onVideoCall} className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary text-white'}`}>
-        <Video size={18} /> <span>Video Call</span>
-      </button>
+      <div className="flex items-center gap-4">
+         <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
+            <Shield size={12} className="text-primary-600" />
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">E2E Encrypted</span>
+         </div>
+         <button 
+          onClick={onVideoCall} 
+          className={`h-11 px-6 rounded-2xl font-black flex items-center gap-2 transition-all active:scale-95 shadow-lg ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-primary-200 hover:bg-primary-700'}`}
+        >
+          <Video size={18} strokeWidth={2.5} /> 
+          <span className="uppercase text-[10px] tracking-widest">Call</span>
+        </button>
+      </div>
     </div>
   );
+};
+
+const CustomMessage = () => {
+  const { message } = useMessageContext();
+  const techSignals = ['VIDEO_CALL_STARTED', 'VIDEO_CALL_MISSED', 'VIDEO_CALL_ENDED', 'VIDEO_CALL_DECLINED'];
+  const isTechnical = techSignals.includes(message.text);
+  
+  if (isTechnical) {
+      let Icon = Phone;
+      let label = '';
+      let colorClass = 'text-gray-400';
+      const { t } = useAccessibility();
+
+      if (message.text === 'VIDEO_CALL_STARTED') {
+        label = t.video?.started || 'Video call started';
+        Icon = Phone;
+        colorClass = 'text-blue-500';
+      }
+      if (message.text === 'VIDEO_CALL_MISSED') {
+        label = t.video?.missed || 'Missed video call';
+        Icon = Clock;
+        colorClass = 'text-red-500';
+      }
+      if (message.text === 'VIDEO_CALL_ENDED') {
+        label = t.video?.ended || 'Call ended';
+        Icon = PhoneOff;
+        colorClass = 'text-gray-400';
+      }
+      if (message.text === 'VIDEO_CALL_DECLINED') {
+        label = t.video?.declined || 'Call declined';
+        Icon = AlertTriangle;
+        colorClass = 'text-orange-500';
+      }
+      
+      return (
+          <div className="flex justify-center my-4">
+              <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] opacity-60 ${colorClass}`}>
+                  <Icon size={12} strokeWidth={3} />
+                  {label}
+              </div>
+          </div>
+      );
+  }
+
+  return <MessageSimple />;
 };
 
 const ChatPage = () => {
@@ -36,12 +100,9 @@ const ChatPage = () => {
   const navigate = useNavigate();
   const { chat: client } = useStreamClient();
   const { highContrast } = useAccessibility();
-  const { addToast, removeToast } = useToast();
   const [channel, setChannel] = useState(null);
   const [error, setError] = useState(null);
-  const activeToastRef = useRef(null);
 
-  // Initialize Channel & Listeners
   useEffect(() => {
     if (!client || !requestId) return;
 
@@ -49,7 +110,6 @@ const ChatPage = () => {
 
     const initChannel = async () => {
       try {
-        // Sync members
         let members = [];
         try {
           const { data } = await api.get(`/auth/chat/participants/${requestId}`);
@@ -65,70 +125,6 @@ const ChatPage = () => {
         
         await channelInstance.watch();
         setChannel(channelInstance);
-
-        // ✅ LISTEN FOR INCOMING CALLS
-        const handleNewMessage = async (event) => {
-          // Ignore my own messages
-          if (event.user.id === client.userID) return;
-
-          const messageText = event.message.text || '';
-          const callerName = event.user?.name || event.user?.id || 'Someone';
-
-          // ✅ Show toast for call invitations
-          if (messageText.includes('📞 Started a Video Call')) {
-            
-            // Remove any existing toast first
-            if (activeToastRef.current) {
-              removeToast(activeToastRef.current);
-            }
-
-            // Create unique toast ID
-            const toastId = `call-${requestId}-${Date.now()}`;
-            activeToastRef.current = toastId;
-
-            // ✅ Show toast with Join AND Dismiss actions
-            addToast(
-              `${callerName} is calling you`,
-              'call',
-              {
-                label: 'Join',
-                onClick: () => {
-                  activeToastRef.current = null;
-                  navigate(`/video/${requestId}`);
-                },
-                // ✅ ADD DISMISS HANDLER
-                onDismiss: async () => {
-                  try {
-                    // Send "Call Declined" message to notify caller
-                    await channelInstance.sendMessage({ text: '❌ Call Declined' });
-                    
-                    // Remove toast
-                    if (activeToastRef.current) {
-                      removeToast(activeToastRef.current);
-                      activeToastRef.current = null;
-                    }
-                  } catch (err) {
-                    console.error('Failed to send decline message:', err);
-                  }
-                }
-              },
-              toastId
-            );
-          }
-
-          // ✅ Clear toast when call ends, is missed, or declined
-          if (messageText.includes('❌ Missed Video Call') || 
-              messageText.includes('📞 Call Ended') ||
-              messageText.includes('❌ Call Declined')) {
-            if (activeToastRef.current) {
-              removeToast(activeToastRef.current);
-              activeToastRef.current = null;
-            }
-          }
-        };
-
-        channelInstance.on('message.new', handleNewMessage);
-
       } catch (err) {
         console.error("Chat init error:", err);
         setError("Could not load chat.");
@@ -136,34 +132,23 @@ const ChatPage = () => {
     };
 
     initChannel();
-
-    // Cleanup on unmount
-    return () => {
-      if (channelInstance) {
-        channelInstance.off('message.new');
-      }
-      if (activeToastRef.current) {
-        removeToast(activeToastRef.current);
-        activeToastRef.current = null;
-      }
-    };
-  }, [client, requestId, navigate, addToast, removeToast]);
-
-  const containerClass = highContrast ? "bg-black border-2 border-yellow-400" : "bg-white border border-slate-200 shadow-xl";
+    return () => {};
+  }, [client, requestId]);
 
   if (!client || !channel) {
     if (error) return <div className="p-10 text-center text-red-500 font-bold">{error}</div>;
     return (
-      <div className={`flex flex-col items-center justify-center h-[60vh] gap-4 ${highContrast ? 'bg-black' : ''}`}>
-        <Loader2 className={`animate-spin ${highContrast ? 'text-yellow-400' : 'text-primary'}`} size={40} />
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
+        <Loader2 className="animate-spin text-primary-600" size={48} />
+        <p className="font-black text-gray-400 uppercase tracking-widest text-sm animate-pulse">Establishing Line...</p>
       </div>
     );
   }
 
   return (
-    <div className={`max-w-6xl mx-auto h-[85vh] rounded-2xl overflow-hidden flex flex-col transition-colors ${containerClass}`}>
+    <div className={`h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] flex flex-col transition-all overflow-hidden border shadow-2xl rounded-[3rem] ${highContrast ? "bg-black border-yellow-400" : "bg-white border-gray-100"}`}>
       <Chat client={client} theme={highContrast ? "messaging dark" : "messaging light"}>
-        <Channel channel={channel}>
+        <Channel channel={channel} Message={CustomMessage}>
           <Window>
             <CustomChannelHeader 
                 channel={channel} 
@@ -172,12 +157,35 @@ const ChatPage = () => {
                 onBack={() => navigate(-1)}
             />
             <MessageList />
-            <MessageInput focus />
+            <div className="px-6 py-4 bg-white">
+              <MessageInput focus grow />
+            </div>
           </Window>
           <Thread />
         </Channel>
       </Chat>
-      {highContrast && <style>{`.str-chat { background-color: #000 !important; color: #facc15 !important; }`}</style>}
+      
+      {/* Premium Stream Chat Overrides */}
+      <style>{`
+        .str-chat { font-family: 'Inter', sans-serif !important; height: 100% !important; }
+        .str-chat__container { background-color: transparent !important; }
+        .str-chat-channel { height: 100% !important; }
+        .str-chat__main-panel { padding: 0 !important; }
+        .str-chat__message-simple { padding: 10px 24px !important; }
+        .str-chat__message-simple-text-inner { border-radius: 20px !important; padding: 12px 18px !important; font-weight: 600 !important; font-size: 14px !important; border: 1px solid #f3f4f6 !important; background-color: #f9fafb !important; color: #1f2937 !important; }
+        .str-chat__message-simple--me .str-chat__message-simple-text-inner { background-color: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+        .str-chat__input-flat { background-color: #f9fafb !important; border-radius: 24px !important; border: 1px solid #f3f4f6 !important; padding: 4px 8px !important; margin: 0 !important; }
+        .str-chat__message-input { border-top: none !important; padding: 0 !important; }
+        .str-chat__message-list { background-color: white !important; }
+        ${highContrast ? `
+          .str-chat__message-list { background-color: #000 !important; }
+          .str-chat { background-color: #000 !important; color: #facc15 !important; }
+          .str-chat__message-simple-text-inner { background-color: #000 !important; color: #facc15 !important; border: 2px solid #facc15 !important; }
+          .str-chat__message-simple--me .str-chat__message-simple-text-inner { background-color: #facc15 !important; color: #000 !important; }
+          .str-chat__input-flat { background-color: #000 !important; border: 2px solid #facc15 !important; }
+          .str-chat__message-input-textarea { color: #facc15 !important; }
+        ` : ''}
+      `}</style>
     </div>
   );
 };

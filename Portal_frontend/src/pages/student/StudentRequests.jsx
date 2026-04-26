@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useQuery } from '@tanstack/react-query';
-import { ListFilter, Calendar, MapPin, Clock, AlertCircle, Loader2, MessageSquare, Plus, Check, Star } from 'lucide-react';
+import { ListFilter, Calendar, MapPin, Clock, AlertCircle, Loader2, MessageSquare, Plus, Check, Star, ArrowRight, XCircle, Search } from 'lucide-react';
 import api from '../../api/axios';
 import { useAccessibility } from '../../context/AccessibilityContext';
 
@@ -9,7 +9,7 @@ const StudentRequests = () => {
   const [statusFilter, setStatusFilter] = useState(''); 
   const [page, setPage] = useState(1);
   const navigate = useNavigate(); 
-  const { t, highContrast, language } = useAccessibility(); // Get 'language' for date formatting
+  const { t, highContrast, language } = useAccessibility();
 
   // Fetch Data
   const { data, isLoading, isError, isFetching } = useQuery({
@@ -23,195 +23,211 @@ const StudentRequests = () => {
     keepPreviousData: true
   });
 
-  // --- Styles ---
-  const getStatusStyle = (status) => {
-    if (highContrast) return 'border-2 border-yellow-400 text-yellow-400 bg-black';
-    switch (status) {
-      case 'OPEN': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'ACCEPTED': return 'bg-green-100 text-green-700 border-green-200';
-      case 'COMPLETED': return 'bg-slate-100 text-slate-700 border-slate-200';
-      case 'TIMED_OUT': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const cardClass = highContrast 
-    ? "bg-black border-2 border-yellow-400 text-yellow-400 shadow-none" 
-    : "bg-white border border-slate-100 shadow-sm";
-
-  const btnPrimary = highContrast
-    ? "bg-yellow-400 text-black border-2 border-black font-black hover:bg-yellow-300"
-    : "bg-primary text-white hover:bg-primary-dark";
-
-  // Helper to translate status codes
   const translateStatus = (status) => {
     const key = status?.toLowerCase();
     return t.status[key] || status; 
   };
 
+  const handleCancelRequest = async (requestId) => {
+    if (!window.confirm("Are you sure you want to cancel this request?")) return;
+    try {
+      await api.post('/student/cancel-request', { requestId });
+      window.location.reload();
+    } catch (err) {
+      alert("Failed to cancel request");
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-primary-600" size={48} /></div>;
+
   return (
-    <div className={`max-w-5xl mx-auto py-6 px-4 transition-colors duration-300`}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-12 space-y-10">
+      
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6">
         <div>
-          <h2 className={`text-2xl font-bold ${highContrast ? 'text-yellow-400' : 'text-slate-900'}`}>
+          <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
             {t.studentRequests.title || "My Exam Requests"}
           </h2>
-          <p className={highContrast ? 'text-yellow-200' : 'text-slate-500'}>
-            {t.studentRequests.subtitle || "Track your bookings"}
+          <p className="text-gray-500 text-lg font-medium">
+            {t.studentRequests.subtitle || "Manage your upcoming scribe bookings and history."}
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
-            onClick={() => navigate('/student/create-request')}
-            className={`${btnPrimary} px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm outline-none focus:ring-4 focus:ring-yellow-500`}
-          >
-            <Plus size={20} /> {t.studentRequests.newRequest || "New Request"}
-          </button>
-
-          <div className={`flex items-center gap-3 p-2 rounded-xl border shadow-sm ${highContrast ? 'bg-black border-yellow-400' : 'bg-white'}`}>
-            <ListFilter size={18} className={highContrast ? "text-yellow-400" : "text-slate-400 ml-2"} />
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <select 
               value={statusFilter} 
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className={`bg-transparent border-none focus:ring-0 text-sm font-semibold pr-8 cursor-pointer outline-none ${highContrast ? 'text-yellow-400' : 'text-slate-900'}`}
+              className="w-full pl-12 pr-10 py-4 rounded-[1.5rem] bg-gray-100/80 border-none font-bold text-gray-700 appearance-none focus:ring-2 focus:ring-primary-600 outline-none transition-all cursor-pointer"
             >
-              <option value="">{t.studentRequests.filterAll || "All Requests"}</option>
+              <option value="">{t.studentRequests.filterAll || "All Statuses"}</option>
               <option value="OPEN">{t.status.open}</option>
               <option value="ACCEPTED">{t.status.accepted}</option>
               <option value="COMPLETED">{t.status.completed}</option>
               <option value="TIMED_OUT">{t.status.timed_out}</option>
             </select>
           </div>
+
+          <button 
+            onClick={() => navigate('/student/create-request')}
+            className="px-8 py-4 bg-primary-600 text-white rounded-[1.5rem] font-black shadow-xl shadow-primary-200 hover:shadow-primary-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3"
+          >
+            <Plus size={22} strokeWidth={3} /> {t.studentRequests.newRequest || "New Request"}
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className={`animate-spin ${highContrast ? 'text-yellow-400' : 'text-primary'}`} size={40} />
-        </div>
-      ) : isError ? (
-        <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-100 flex items-center gap-3">
-          <AlertCircle /> <span>{t.common.errorLoading || "Error loading requests"}</span>
-        </div>
-      ) : data?.requests.length === 0 ? (
-        <div className={`text-center py-20 rounded-2xl border-2 border-dashed ${highContrast ? 'bg-black border-yellow-400 text-yellow-400' : 'bg-white border-slate-300'}`}>
-          <Calendar size={48} className={`mx-auto mb-4 ${highContrast ? 'text-yellow-400' : 'text-slate-300'}`} />
-          <h3 className="text-lg font-bold">{t.studentRequests.noRequests || "No requests found"}</h3>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Card List */}
-          {data.requests.map((req) => (
-            <div key={req.id} className={`${cardClass} p-5 rounded-2xl transition-all hover:shadow-md relative`}>
-              <div className="flex flex-col md:flex-row justify-between gap-4">
-                
-                {/* Left Side: Info */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyle(req.status)}`}>
-                      {translateStatus(req.status)}
-                    </span>
-                    <span className={`text-xs font-medium ${highContrast ? 'text-yellow-200' : 'text-slate-400'}`}>
-                       {new Date(req.created_at).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US')}
-                    </span>
-                  </div>
+      {/* Requests Content */}
+      <div className="min-h-[500px]">
+        {isError ? (
+          <div className="bg-red-50 text-red-700 p-8 rounded-[2rem] border border-red-100 flex items-center gap-4 shadow-sm">
+            <AlertCircle size={32} /> 
+            <div>
+               <p className="font-black text-lg">Failed to load data</p>
+               <p className="opacity-80">{t.common.errorLoading || "Please check your connection and try again."}</p>
+            </div>
+          </div>
+        ) : data?.requests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 opacity-30 border-4 border-dashed border-gray-200 rounded-[3rem]">
+            <Calendar size={80} strokeWidth={1} className="mb-6" />
+            <h3 className="text-2xl font-black">{t.studentRequests.noRequests || "No bookings found"}</h3>
+            <p className="mt-2 font-bold">Try changing the filters or create a new request.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {data.requests.map((req) => (
+              <div key={req.id} className="group glass-card p-2 rounded-[2.5rem] transition-all duration-500 hover:shadow-premium-hover hover:-translate-y-1">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-8">
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} className={highContrast ? "text-yellow-400" : "text-primary"} />
-                      <span className="font-semibold">
-                        {new Date(req.exam_date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US')}
-                      </span>
+                  {/* Left: Status & Timing */}
+                  <div className="flex flex-col md:flex-row items-center gap-8 w-full md:w-auto">
+                    <div className={`h-24 w-24 rounded-3xl flex flex-col items-center justify-center border-2 transition-colors ${
+                      req.status === 'ACCEPTED' ? 'bg-green-50 border-green-100 text-green-600' :
+                      req.status === 'OPEN' ? 'bg-blue-50 border-blue-100 text-blue-600' :
+                      'bg-gray-50 border-gray-100 text-gray-500'
+                    }`}>
+                      <span className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{new Date(req.exam_date).toLocaleDateString('en-IN', { month: 'short' })}</span>
+                      <span className="text-3xl font-black leading-none">{new Date(req.exam_date).getDate()}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={16} className={highContrast ? "text-yellow-400" : "text-primary"} />
-                      <span className="font-semibold">{req.exam_time || 'TBD'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm md:col-span-2 opacity-80">
-                      <MapPin size={16} />
-                      <span className="capitalize">{req.city}, {req.district}, {req.state}</span>
+
+                    <div className="text-center md:text-left space-y-2">
+                       <div className="flex items-center justify-center md:justify-start gap-3">
+                          <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                             req.status === 'ACCEPTED' ? 'bg-green-100 text-green-700 border-green-200' :
+                             req.status === 'OPEN' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                             'bg-gray-100 text-gray-700'
+                          }`}>
+                            {translateStatus(req.status)}
+                          </span>
+                          <span className="text-xs font-bold text-gray-400 tabular-nums">
+                             ID: #{req.id.toString().slice(-4)}
+                          </span>
+                       </div>
+                       <h3 className="text-2xl font-black text-gray-900 group-hover:text-primary-600 transition-colors">
+                          {req.status === 'ACCEPTED' ? req.scribe_name : `Scribe for ${req.exam_language || 'Exam'}`}
+                       </h3>
+                       <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-gray-500 font-bold text-sm">
+                          <div className="flex items-center gap-2">
+                            <Clock size={16} className="text-primary-400" /> {req.exam_time || 'TBD'}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin size={16} className="text-primary-400" /> {req.city}, {req.district}
+                          </div>
+                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right Side: Actions */}
-                <div className={`flex items-center justify-between md:flex-col md:justify-center md:items-end border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-8 gap-4 ${highContrast ? 'border-yellow-400' : 'border-slate-100'}`}>
-                  
-                  {/* --- ACCEPTED Logic --- */}
-                  {req.status === 'ACCEPTED' && (
-                    <div className="flex flex-col items-end gap-3 w-full">
-                      <div className="text-right">
-                        <p className={`text-[10px] uppercase font-bold tracking-wider opacity-60`}>
-                          {t.studentRequests.assignedScribe || "Assigned Scribe"}
-                        </p>
-                        <p className="font-bold">{req.scribe_name}</p>
-                      </div>
-                      <button 
-                        onClick={() => navigate(`/chat/${req.id}`)}
-                        className={`w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 ${btnPrimary}`}
-                      >
-                        <MessageSquare size={16} /> {t.studentRequests.startChat || "Chat"}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* --- OPEN Logic --- */}
-                  {req.status === 'OPEN' && (
-                    <p className={`text-sm font-medium italic ${highContrast ? 'text-yellow-300' : 'text-blue-600'}`}>
-                      {t.studentRequests.awaiting || "Awaiting acceptance..."}
-                    </p>
-                  )}
-
-                  {/* --- COMPLETED Logic --- */}
-                  {req.status === 'COMPLETED' && (
-                     <>
-                      {req.is_rated ? (
-                        <div className="flex items-center gap-2 text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100">
-                          <Check size={16} /> {t.studentRequests.feedbackSent || "Feedback Sent"}
+                  {/* Right: Context Actions */}
+                  <div className="flex flex-col sm:flex-row md:flex-col items-center md:items-end gap-4 w-full md:w-64">
+                    
+                    {req.status === 'ACCEPTED' && (
+                      <div className="w-full space-y-3">
+                        <div className="text-center md:text-right bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t.studentRequests.assignedScribe || "Assigned Scribe"}</p>
+                          <p className="font-black text-gray-800">{req.scribe_name}</p>
                         </div>
-                      ) : (
                         <button 
-                          onClick={() => navigate(`/student/feedback/${req.id}`)}
-                          className={`flex items-center gap-2 text-sm font-bold border-2 px-4 py-2 rounded-lg transition-all ${highContrast ? 'border-yellow-400 text-yellow-400 hover:bg-yellow-900' : 'border-primary text-primary hover:bg-blue-50'}`}
+                          onClick={() => navigate(`/chat/${req.id}`)}
+                          className="w-full py-4 bg-primary-600 text-white rounded-2xl font-black shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all flex items-center justify-center gap-2 group/chat"
                         >
-                          <Star size={16} /> {t.studentRequests.feedback || "Leave Feedback"}
+                          <MessageSquare size={18} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" /> 
+                          {t.studentRequests.startChat || "Open Chat"}
                         </button>
-                      )}
-                     </>
-                  )}
-                  
+                      </div>
+                    )}
+
+                    {req.status === 'OPEN' && (
+                      <div className="w-full flex flex-col items-center md:items-end gap-3">
+                        <div className="flex items-center gap-2 text-primary-600 font-black text-sm animate-pulse">
+                          <Loader2 size={16} className="animate-spin" /> {t.studentRequests.awaiting || "Awaiting Scribe..."}
+                        </div>
+                        <button 
+                          onClick={() => handleCancelRequest(req.id)}
+                          className="w-full md:w-auto px-6 py-3 rounded-xl border-2 border-red-100 text-red-600 font-black text-xs hover:bg-red-50 hover:border-red-200 transition-all"
+                        >
+                          Cancel Request
+                        </button>
+                      </div>
+                    )}
+
+                    {req.status === 'COMPLETED' && (
+                       <div className="w-full">
+                        {req.is_rated ? (
+                          <div className="flex items-center justify-center gap-2 text-green-600 font-black bg-green-50 px-6 py-4 rounded-2xl border border-green-100">
+                            <Check size={18} strokeWidth={3} /> {t.studentRequests.feedbackSent || "Rated"}
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => navigate(`/student/feedback/${req.id}`)}
+                            className="w-full py-4 bg-white border-2 border-primary-600 text-primary-600 rounded-2xl font-black hover:bg-primary-50 transition-all flex items-center justify-center gap-2 group/star"
+                          >
+                            <Star size={18} strokeWidth={2.5} className="group-hover:fill-primary-600 group-hover:scale-110 transition-all" /> 
+                            {t.studentRequests.feedback || "Rate Experience"}
+                          </button>
+                        )}
+                       </div>
+                    )}
+                    
+                    {req.status === 'TIMED_OUT' && (
+                      <div className="flex items-center gap-2 text-red-400 font-black text-sm italic">
+                        <XCircle size={18} /> Request Expired
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-
-          {/* 🟢 PAGINATION CONTROLS */}
-          <div className="flex justify-center items-center gap-4 mt-8 pb-8">
-            <button 
-              disabled={page === 1 || isFetching}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className={`px-4 py-2 rounded-lg font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'bg-black text-yellow-400 border-2 border-yellow-400' : 'bg-white border text-slate-700 hover:bg-slate-50'}`}
-            >
-              {t.common.previous || "Previous"}
-            </button>
-            
-            <span className={`font-mono font-bold ${highContrast ? 'text-yellow-400' : 'text-slate-500'}`}>
-               {t.common.page || "Page"} {page}
-            </span>
-
-            <button 
-              disabled={!data?.has_more || isFetching}
-              onClick={() => setPage(p => p + 1)}
-              className={`px-4 py-2 rounded-lg font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'bg-black text-yellow-400 border-2 border-yellow-400' : 'bg-white border text-slate-700 hover:bg-slate-50'}`}
-            >
-              {t.common.next || "Next"}
-            </button>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Pagination */}
+        {(page > 1 || data?.has_more) && (
+           <div className="flex justify-center items-center gap-8 mt-16 pb-12">
+             <button 
+               disabled={page === 1 || isFetching}
+               onClick={() => setPage(p => Math.max(1, p - 1))}
+               className="h-14 w-14 rounded-[1.5rem] bg-white border border-gray-200 flex items-center justify-center font-black shadow-premium hover:shadow-premium-hover transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed group"
+             >
+                <ArrowRight size={20} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
+             </button>
+             
+             <div className="flex flex-col items-center">
+                <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{t.common?.page || "Page"}</span>
+                <span className="text-2xl font-black text-primary-600 tabular-nums">{page}</span>
+             </div>
+
+             <button 
+               disabled={!data?.has_more || isFetching}
+               onClick={() => setPage(p => p + 1)}
+               className="h-14 w-14 rounded-[1.5rem] bg-primary-600 text-white flex items-center justify-center font-black shadow-lg shadow-primary-100 hover:shadow-primary-200 transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed group"
+             >
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+             </button>
+           </div>
+        )}
+      </div>
     </div>
   );
 };

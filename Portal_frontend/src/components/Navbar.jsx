@@ -1,20 +1,59 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAccessibility } from '../context/AccessibilityContext';
-import { Sun, Moon, Languages, BookOpen, LogOut } from 'lucide-react';
+import { 
+  BookOpen, 
+  ChevronDown, 
+  LogOut, 
+  Menu, 
+  X, 
+  User, 
+  Globe, 
+  Contrast, 
+  LayoutDashboard,
+  ArrowLeft,
+  Home,
+  UserCircle,
+  Users,
+  Bell
+} from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, language, toggleLanguage, highContrast, toggleContrast } = useAccessibility();
 
-  const handleLogout = () => { 
-    logout(); 
-    navigate('/login'); 
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  const profileDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  const getHomeLink = () => {
+  const getDashboardLink = () => {
     if (!user) return '/';
     if (user.role === 'STUDENT') return '/student/dashboard';
     if (user.role === 'SCRIBE') return '/scribe/dashboard';
@@ -22,107 +61,208 @@ const Navbar = () => {
     return '/';
   };
 
-  // High Contrast Styles
-  const navClass = highContrast 
-    ? "bg-black border-b-2 border-yellow-400 text-yellow-400" 
-    : "bg-white border-b border-slate-200 text-slate-900 shadow-sm";
-    
-  const btnClass = highContrast 
-    ? "bg-yellow-400 text-black border-2 border-black font-black focus:ring-yellow-500" 
-    : "bg-primary text-white hover:bg-primary-dark focus:ring-primary";
+  const handleGoBack = (e) => {
+    e.preventDefault();
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate(getDashboardLink()); 
+    }
+  };
 
-  // Fixed Accessibility Controls Group Background
-  const controlsBg = highContrast ? "bg-yellow-900/40" : "bg-slate-100";
+  const navBaseClass = scrolled 
+    ? "bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm" 
+    : "bg-transparent";
+    
+  const hcNavClass = "bg-black border-b-2 border-yellow-400";
+  
+  const textClass = highContrast ? "text-yellow-400" : "text-gray-700";
+  const iconColor = highContrast ? "text-yellow-400" : "text-primary-600";
 
   return (
-    <nav 
-      className={`px-4 md:px-6 py-3 sticky top-0 z-50 transition-colors duration-300 ${navClass}`}
-      aria-label="Main Navigation"
-    >
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        
-        {/* --- 1. Smart Logo Redirect --- */}
-        <Link 
-          to={getHomeLink()} 
-          className="flex items-center gap-2 group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-          aria-label="ScribePortal Home"
-        >
-          <div className={`p-2 rounded-xl transition-colors ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary/10 text-primary group-hover:bg-primary/20'}`}>
-            <BookOpen size={24} aria-hidden="true" />
-          </div>
-          <span className={`text-lg md:text-xl font-bold tracking-tight ${highContrast ? 'text-yellow-400' : 'text-slate-900'}`}>
-            ScribePool
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Accessibility Controls Group */}
-          <div 
-            className={`flex items-center gap-1 p-1 rounded-lg ${controlsBg}`}
-            role="group" 
-            aria-label="Site Accessibility Settings"
-          >
-            <button 
-                onClick={toggleLanguage} 
-                className={`flex items-center gap-1 font-bold text-[10px] md:text-xs uppercase px-2 py-1 rounded transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 ${highContrast ? 'bg-black text-yellow-400 hover:bg-yellow-400 hover:text-black' : 'bg-white hover:bg-slate-50'}`}
-                title="Switch Language"
-                aria-label={language === 'en' ? "Switch to Hindi" : "Switch to English"}
-            >
-                <Languages size={14} aria-hidden="true" /> 
-                <span>{language === 'en' ? 'HI' : 'EN'}</span>
-            </button>
-            <button 
-                onClick={toggleContrast} 
-                className={`p-1 rounded transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 ${highContrast ? 'bg-yellow-400 text-black' : 'bg-white hover:bg-slate-50'}`}
-                title="Toggle High Contrast"
-                aria-pressed={highContrast}
-                aria-label={highContrast ? "Disable High Contrast Mode" : "Enable High Contrast Mode"}
-            >
-                {highContrast ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-            </button>
-          </div>
-
-          {/* User Section */}
-          {user ? (
-            <div className="flex items-center gap-2 md:gap-4 pl-2 md:pl-4 border-l border-slate-200">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="font-bold text-xs md:text-sm leading-tight">
-                  {t.nav.welcome} {user.first_name}
-                </span>
-                <span 
-                  className={`text-[9px] md:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${highContrast ? 'bg-yellow-400 text-black' : 'bg-slate-200 text-slate-600'}`}
-                >
-                  {user.role}
-                </span>
-              </div>
-              
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${highContrast ? hcNavClass : navBaseClass}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 md:h-20">
+          
+          {/* Left: Brand & Back */}
+          <div className="flex items-center gap-4">
+            {location.pathname !== '/' && location.pathname !== getDashboardLink() && (
               <button 
-                onClick={handleLogout} 
-                className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 ${highContrast ? 'hover:bg-yellow-900 text-yellow-400' : 'text-slate-500 hover:bg-slate-100 hover:text-red-600'}`}
-                title={t.nav.logout}
-                aria-label="Log Out"
+                onClick={handleGoBack}
+                className={`p-2 rounded-xl transition-all ${highContrast ? 'hover:bg-yellow-400/10' : 'hover:bg-gray-100'} group`}
+                aria-label="Go Back"
               >
-                <LogOut size={20} aria-hidden="true" />
+                <ArrowLeft size={22} className={textClass} />
+              </button>
+            )}
+
+            <Link to={getDashboardLink()} className="flex items-center space-x-3 group outline-none">
+              <div className={`p-2 rounded-xl transition-all ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-lg shadow-primary-200 group-hover:scale-105 group-hover:rotate-3'}`}>
+                <BookOpen size={24} />
+              </div>
+              <span className={`text-xl font-black tracking-tight hidden sm:block ${textClass}`}>ScribePool</span>
+            </Link>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center space-x-2">
+
+            {user && (
+              <Link 
+                to={getDashboardLink()} 
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${location.pathname.includes('dashboard') ? (highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-50 text-primary-600') : (highContrast ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50')}`}
+              >
+                {t.nav.dashboard}
+              </Link>
+            )}
+
+            <div className="w-px h-6 bg-gray-200 mx-2"></div>
+
+            {/* Language & Theme */}
+            <div className={`flex items-center gap-1 p-1 rounded-2xl ${highContrast ? 'border border-yellow-400' : 'bg-gray-100/50 border border-gray-200'}`}>
+              <button 
+                onClick={toggleLanguage}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${language === 'hi' ? (highContrast ? 'bg-yellow-400 text-black' : 'bg-white text-primary-600 shadow-sm') : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                {language === 'en' ? 'ENGLISH' : 'हिन्दी'}
+              </button>
+              <button 
+                onClick={toggleContrast}
+                className={`p-1.5 rounded-xl transition-all ${highContrast ? 'bg-yellow-400 text-black' : 'text-gray-400 hover:text-primary-600 hover:bg-white'}`}
+                title="Toggle Accessibility Mode"
+              >
+                <Contrast size={16} />
               </button>
             </div>
-          ) : (
-             <div className="flex gap-2">
-               <Link 
-                 to="/login" 
-                 className={`px-3 md:px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 ${highContrast ? 'text-yellow-400 hover:underline' : 'text-slate-600 hover:bg-slate-50'}`}
-               >
-                 {t.nav.login}
-               </Link>
-               <Link 
-                 to="/register-select" 
-                 className={`px-3 md:px-4 py-2 text-xs md:text-sm rounded-lg shadow-md transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${btnClass}`}
-               >
-                 {language === 'en' ? 'Register' : 'रजिस्टर'}
-               </Link>
-             </div>
-          )}
+
+            {user ? (
+              <div className="relative ml-4 flex items-center gap-4" ref={profileDropdownRef}>
+                <button className={`p-2 rounded-xl transition-all ${highContrast ? 'text-yellow-400' : 'text-gray-400 hover:text-primary-600 hover:bg-gray-100'}`}>
+                  <Bell size={20} />
+                </button>
+                
+                <button 
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className={`flex items-center gap-3 p-1.5 pr-3 rounded-2xl transition-all ${highContrast ? 'border border-yellow-400' : 'bg-white border border-gray-200 hover:shadow-md'}`}
+                >
+                  <div className={`h-8 w-8 rounded-xl font-black flex items-center justify-center ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white'}`}>
+                    {user.first_name?.[0].toUpperCase()}
+                  </div>
+                  <div className="text-left leading-none hidden lg:block">
+                    <p className={`text-sm font-black ${textClass}`}>{user.first_name}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-gray-400">{user.role}</p>
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${isProfileDropdownOpen ? 'rotate-180' : ''} ${textClass}`} />
+                </button>
+
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 glass-card rounded-3xl py-2 overflow-hidden border border-gray-200 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="px-5 py-4 border-b border-gray-100">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Account</p>
+                      <p className="text-sm font-bold text-gray-900 truncate">{user.email}</p>
+                    </div>
+                    
+                    <Link to="/profile" onClick={() => setIsProfileDropdownOpen(false)} className="flex items-center gap-3 px-5 py-3.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                      <UserCircle size={18} className="text-primary-600" />
+                      {t.profile.viewProfile}
+                    </Link>
+
+                    {user.role === 'ADMIN' && (
+                      <Link to="/admin/users" onClick={() => setIsProfileDropdownOpen(false)} className="flex items-center gap-3 px-5 py-3.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <Users size={18} className="text-primary-600" />
+                        Manage Users
+                      </Link>
+                    )}
+
+                    <div className="p-2">
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <div className="p-1.5 rounded-lg bg-red-100">
+                          <LogOut size={16} />
+                        </div>
+                        {t.nav.logout}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 ml-4">
+                <Link to="/login" className={`text-sm font-bold px-4 py-2 rounded-xl transition-all ${highContrast ? 'text-yellow-400 border border-yellow-400' : 'text-gray-600 hover:text-primary-600'}`}>
+                  Sign In
+                </Link>
+                <Link 
+                  to="/register-select" 
+                  className={`px-6 py-2.5 rounded-2xl text-sm font-black transition-all ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-lg shadow-primary-200 hover:shadow-primary-300 hover:-translate-y-0.5'}`}
+                >
+                  {t.nav.register}
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`md:hidden p-2 rounded-xl ${highContrast ? 'text-yellow-400' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className={`md:hidden glass-card mx-4 rounded-3xl mt-2 overflow-hidden shadow-2xl animate-in slide-in-from-top-4 duration-300 ${highContrast ? 'bg-black border-2 border-yellow-400' : ''}`}>
+          <div className="px-4 pt-2 pb-6 space-y-2">
+            
+            {user && (
+              <Link to={getDashboardLink()} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-3 p-4 rounded-2xl font-bold ${textClass} hover:bg-gray-50`}>
+                <LayoutDashboard size={20} /> Dashboard
+              </Link>
+            )}
+
+            <div className="h-px bg-gray-100 mx-4"></div>
+
+            <div className="grid grid-cols-2 gap-2 p-2">
+              <button onClick={toggleLanguage} className={`flex items-center justify-center gap-2 p-3 rounded-2xl border ${highContrast ? 'border-yellow-400 text-yellow-400' : 'border-gray-200 text-gray-600'}`}>
+                <Globe size={16} /> {language === 'en' ? 'Hindi' : 'English'}
+              </button>
+              <button onClick={toggleContrast} className={`flex items-center justify-center gap-2 p-3 rounded-2xl border ${highContrast ? 'bg-yellow-400 text-black border-yellow-400' : 'border-gray-200 text-gray-600'}`}>
+                <Contrast size={16} /> Mode
+              </button>
+            </div>
+
+            {user ? (
+              <div className="p-2 space-y-2">
+                <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-3 p-4 rounded-2xl font-bold ${textClass} hover:bg-gray-50`}>
+                  <UserCircle size={20} /> {t.nav.profile}
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-red-600 hover:bg-red-50"
+                >
+                  <LogOut size={20} /> {t.nav.logout}
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 grid grid-cols-2 gap-4">
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center justify-center p-4 rounded-2xl font-bold border ${highContrast ? 'border-yellow-400 text-yellow-400' : 'border-gray-200 text-gray-600'}`}>
+                  Sign In
+                </Link>
+                <Link to="/register-select" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center justify-center p-4 rounded-2xl font-bold ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white'}`}>
+                  Join
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Spacer for Fixed Nav */}
+      <div className="h-0 md:h-0"></div>
     </nav>
   );
 };

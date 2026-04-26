@@ -1,85 +1,108 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useStreamClient } from '../hooks/useStreamClient';
 import { useToast } from '../context/ToastContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAccessibility } from '../context/AccessibilityContext';
+import { Phone, PhoneOff, PhoneIncoming, BellRing, Clock } from 'lucide-react';
 
 const GlobalCallListener = () => {
   const { chat: client } = useStreamClient();
-  const { addToast } = useToast();
+  const { t, highContrast } = useAccessibility();
+  const { addToast, removeToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const checkedMissedCalls = useRef(false);
 
   useEffect(() => {
     if (!client || !user) return;
 
-    const handleNewMessage = (event) => {
-      // FIX: Remove 'system' type check. Just check the text content.
-      if (event.message.text === 'VIDEO_CALL_STARTED') {
-        
-        // Ignore my own messages
-        if (event.user.id === user.id.toString()) return;
-        
-        // Ignore if I'm already in the video call
+    const handleEvent = async (event) => {
+      // We only care about new messages (signals)
+      if (event.type !== 'message.new' && event.type !== 'notification.message_new') return;
+      
+      const message = event.message || {};
+      if (!message.text || message.user?.id === client.userID || event.user?.id === client.userID) return;
+
+      const messageText = message.text;
+      const callerName = message.caller_name || message.user?.name || event.user?.name || 'Someone';
+      const channelId = event.channel_id || (event.channel && event.channel.id) || '';
+      const cleanId = channelId.split(':').pop() || ''; 
+      const requestId = cleanId.replace('exam-', '');
+
+      if (!requestId) return;
+
+      // --- INCOMING CALL ---
+      if (messageText === 'VIDEO_CALL_STARTED') {
         if (location.pathname.includes('/video/')) return;
-
-        const requestId = event.channel_id.replace('exam-', '');
-
+        
+        const toastId = `call-${requestId}`;
         addToast(
-          `${event.user.name} is calling you...`,
+          <div className="flex items-center gap-4 py-1">
+             <div className={`p-3 rounded-2xl animate-bounce ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-100 text-primary-600'}`}>
+                <PhoneIncoming size={24} />
+             </div>
+             <div>
+                <p className="font-black text-[9px] uppercase tracking-[0.2em] text-gray-400 mb-1">{t.video?.incoming || "Incoming Call"}</p>
+                <p className={`font-black text-lg ${highContrast ? 'text-yellow-400' : 'text-gray-900'}`}>{callerName}</p>
+             </div>
+          </div>,
           'call',
           {
-            label: 'Join Video',
-            onClick: () => navigate(`/video/${requestId}`)
-          }
+            label: t.video?.join || 'Answer',
+            onClick: () => navigate(`/video/${requestId}`),
+            onDismiss: async () => {
+              try {
+                const channel = client.channel('messaging', `exam-${requestId}`);
+                await channel.sendMessage({ text: 'VIDEO_CALL_DECLINED' });
+              } catch (err) { console.error("Decline failed", err); }
+            }
+          },
+          toastId
         );
+
+        // Sound effect for incoming call
+        try {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'); 
+          audio.play().catch(() => {});
+        } catch (e) {}
       }
-    };
 
-    const checkMissedCalls = async () => {
-      if (checkedMissedCalls.current) return;
-      checkedMissedCalls.current = true;
-
-      const filter = { type: 'messaging', members: { $in: [user.id.toString()] } };
-      const sort = { last_message_at: -1 };
-
-      try {
-        const channels = await client.queryChannels(filter, sort, { limit: 5 });
+      // --- CALL CANCELED / DECLINED / ENDED / MISSED ---
+      if (['VIDEO_CALL_ENDED', 'VIDEO_CALL_DECLINED', 'VIDEO_CALL_MISSED'].includes(messageText)) {
+        removeToast(`call-${requestId}`);
         
-        for (const channel of channels) {
-          const lastMsg = channel.state.messages[channel.state.messages.length - 1];
-          if (!lastMsg) continue;
-
-          const isCall = lastMsg.text === 'VIDEO_CALL_STARTED';
-          const notMe = lastMsg.user.id !== user.id.toString();
-          const isRecent = (new Date() - new Date(lastMsg.created_at)) < 5 * 60 * 1000;
-
-          if (isCall && notMe && isRecent) {
-             const requestId = channel.id.replace('exam-', '');
-             addToast(
-              `You missed a call from ${lastMsg.user.name}`,
-              'info',
-              {
-                label: 'Call Back',
-                onClick: () => navigate(`/video/${requestId}`)
-              }
-            );
-          }
+        // Auto-navigate away from video if call ended
+        if (location.pathname.includes(`/video/${requestId}`)) {
+           navigate(`/chat/${requestId}`, { replace: true });
         }
-      } catch (err) {
-        console.error("Error checking missed calls", err);
+
+        if (messageText === 'VIDEO_CALL_MISSED') {
+           addToast(
+             <div className="flex items-center gap-4 py-1">
+               <div className="p-3 rounded-2xl bg-red-50 text-red-600">
+                  <PhoneOff size={20} />
+               </div>
+               <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">{t.video?.missed || "Missed Call"}</p>
+                  <p className="font-black text-gray-900">{callerName}</p>
+               </div>
+             </div>,
+             'error',
+             null,
+             `missed-${requestId}-${Date.now()}` // Unique ID for missed calls
+           );
+        }
       }
     };
 
-    client.on('message.new', handleNewMessage);
-    checkMissedCalls();
+    // Listen to all events
+    client.on(handleEvent);
 
     return () => {
-      client.off('message.new', handleNewMessage);
+      client.off(handleEvent);
     };
-  }, [client, user, location.pathname, addToast, navigate]);
+  }, [client, user, navigate, location.pathname, addToast, removeToast, t, highContrast]);
 
   return null;
 };

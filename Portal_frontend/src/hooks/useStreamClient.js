@@ -10,12 +10,21 @@ let videoInstance = null; // ✅ singleton
 export const useStreamClient = () => {
   const { user } = useAuth();
   const [clients, setClients] = useState({ chat: null, video: null });
-  const initializedRef = useRef(false); // ✅ StrictMode guard
 
   useEffect(() => {
-    if (!user || initializedRef.current) return;
-
-    initializedRef.current = true;
+    if (!user) {
+      // Cleanup on logout
+      if (chatInstance) {
+        chatInstance.disconnectUser();
+        chatInstance = null;
+      }
+      if (videoInstance) {
+        videoInstance.disconnectUser();
+        videoInstance = null;
+      }
+      setClients({ chat: null, video: null });
+      return;
+    }
 
     const initClients = async () => {
       try {
@@ -29,14 +38,24 @@ export const useStreamClient = () => {
         };
 
         // ---------- CHAT ----------
+        if (chatInstance && chatInstance.userID !== user.id.toString()) {
+            await chatInstance.disconnectUser();
+            chatInstance = null;
+        }
+
         if (!chatInstance) {
           chatInstance = StreamChat.getInstance(apiKey);
           await chatInstance.connectUser(userCredentials, data.token);
         }
 
         // ---------- VIDEO ----------
+        if (videoInstance && videoInstance.currentUserId !== user.id.toString()) {
+            await videoInstance.disconnectUser();
+            videoInstance = null;
+        }
+
         if (!videoInstance) {
-          videoInstance = StreamVideoClient.getOrCreateInstance({
+          videoInstance = new StreamVideoClient({
             apiKey,
             user: userCredentials,
             token: data.token,
@@ -52,8 +71,8 @@ export const useStreamClient = () => {
     initClients();
 
     return () => {
-      // cleanup on logout / unmount
-      initializedRef.current = false;
+      // Don't disconnect here because we want persistent connection across pages
+      // Disconnect only when user object changes (logout/switch)
     };
   }, [user]);
 
