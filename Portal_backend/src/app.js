@@ -71,7 +71,14 @@ const app = express();
 /* ===== MIDDLEWARE ===== */
 app.use(
   cors({
-    origin: process.env.VERCEL_FRONTEND_URL || "http://localhost:5173", // frontend
+    origin: (origin, callback) => {
+      const allowed = [process.env.FRONTEND_URL, "http://localhost:5173"];
+      if (!origin || allowed.includes(origin) || origin.endsWith(".vercel.app")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,              // allow cookies if needed
   })
 );
