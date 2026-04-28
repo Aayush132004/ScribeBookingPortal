@@ -8,16 +8,16 @@ const RegisterSelect = () => {
 
   // Dynamic Styles
   const bgClass = highContrast 
-    ? "bg-black border-4 border-yellow-400 text-yellow-400" 
+    ? "bg-slate-900/80 border border-slate-800 text-slate-100 backdrop-blur-xl shadow-2xl" 
     : "bg-white border-2 border-slate-200 hover:border-primary shadow-sm";
   
-  const textClass = highContrast ? "text-yellow-400" : "text-slate-800";
-  const subTextClass = highContrast ? "text-yellow-200" : "text-slate-600";
-  const iconBoxClass = highContrast ? "bg-yellow-400 text-black" : "";
+  const textClass = highContrast ? "text-slate-100" : "text-slate-800";
+  const subTextClass = highContrast ? "text-slate-400" : "text-slate-600";
+  const iconBoxClass = highContrast ? "bg-indigo-600 text-white" : "";
 
   return (
-    <div className={`min-h-[80vh] flex flex-col items-center justify-center px-4 transition-colors ${highContrast ? 'bg-black' : ''}`}>
-      <h2 className={`text-3xl font-bold mb-8 ${highContrast ? 'text-yellow-400' : 'text-slate-900'}`}>
+    <div className={`min-h-[80vh] flex flex-col items-center justify-center px-4 transition-colors ${highContrast ? 'bg-slate-950' : ''}`}>
+      <h2 className={`text-3xl font-black mb-8 ${highContrast ? 'text-white' : 'text-slate-900'}`}>
         {t.registerSelect?.title || "Join the Portal"}
       </h2>
       

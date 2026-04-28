@@ -20,15 +20,50 @@
   --primary-900: 221 83% 18%;
 }
 
-/* High Contrast Mode (For Accessibility) */
+/* Premium Dark Mode (Accessible & Modern) */
 .high-contrast {
-  --background: 0 0% 0%;
-  --foreground: 50 100% 50%; /* Bright Yellow */
-  --surface: 0 0% 5%;
-  --border: 50 100% 50%;
+  --background: 222 47% 4%; /* Deep Slate 950 */
+  --foreground: 210 40% 98%; /* Slate 50 */
+  --surface: 222 47% 11%; /* Slate 900 */
+  --border: 217 33% 17%; /* Slate 800 */
   
-  --primary-600: 50 100% 50%;
-  --primary-700: 50 100% 40%;
+  --primary-600: 243 75% 59%; /* Indigo 500 */
+  --primary-700: 243 75% 49%;
+  --primary-50: 222 47% 11%;
+  --primary-100: 222 47% 15%;
+}
+
+.high-contrast .glass-card {
+  @apply bg-slate-900/80 border-slate-800 shadow-2xl;
+}
+
+.high-contrast input, 
+.high-contrast select, 
+.high-contrast textarea {
+  @apply bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500;
+}
+
+.high-contrast .bg-white {
+  @apply bg-slate-900;
+}
+
+.high-contrast .text-gray-900 {
+  @apply text-slate-100;
+}
+
+.high-contrast .text-gray-600,
+.high-contrast .text-gray-500 {
+  @apply text-slate-400;
+}
+
+.high-contrast .bg-gray-50,
+.high-contrast .bg-gray-100 {
+  @apply bg-slate-800/50;
+}
+
+.high-contrast .border-gray-100,
+.high-contrast .border-gray-200 {
+  @apply border-slate-800;
 }
 
 @layer base {

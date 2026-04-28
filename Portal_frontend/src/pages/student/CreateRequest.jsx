@@ -97,10 +97,10 @@ const CreateRequest = () => {
   };
 
   // --- Styles ---
-  const bgClass = highContrast ? "bg-black text-yellow-400 border-2 border-yellow-400" : "bg-white border border-slate-100 shadow-sm";
-  const inputClass = highContrast ? "bg-black border-2 border-yellow-400 text-yellow-400 [color-scheme:dark]" : "bg-white border-slate-300";
-  const btnClass = highContrast ? "bg-yellow-400 text-black font-black hover:bg-yellow-300" : "bg-primary text-white hover:bg-primary-dark";
-  const cardActive = highContrast ? "border-yellow-400 bg-yellow-900/40" : "border-primary bg-blue-50";
+  const bgClass = highContrast ? "bg-slate-900/80 border border-slate-800 text-slate-100 backdrop-blur-xl shadow-2xl" : "bg-white border border-slate-100 shadow-sm";
+  const inputClass = highContrast ? "bg-slate-800/50 border border-slate-700 text-slate-100 [color-scheme:dark]" : "bg-white border-slate-300";
+  const btnClass = highContrast ? "bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-indigo-500/20" : "bg-primary text-white hover:bg-primary-dark";
+  const cardActive = highContrast ? "border-indigo-600 bg-indigo-900/40" : "border-primary bg-blue-50";
 
   const renderStars = (rating) => {
     const r = parseFloat(rating) || 0;
@@ -113,7 +113,7 @@ const CreateRequest = () => {
   };
 
   return (
-    <div className={`max-w-4xl mx-auto py-10 px-4 transition-all ${highContrast ? 'bg-black min-h-screen' : ''}`}>
+    <div className={`max-w-4xl mx-auto py-10 px-4 transition-all duration-500 ${highContrast ? 'bg-slate-950 min-h-screen text-slate-100' : ''}`}>
       
       {/* Stepper Header */}
       <div className="flex items-center justify-between mb-12 px-2 md:px-10">
@@ -123,7 +123,7 @@ const CreateRequest = () => {
               {s}
             </div>
             {s !== 3 && (
-              <div className={`h-1 flex-1 mx-2 ${step > s ? (highContrast ? 'bg-yellow-400' : 'bg-primary') : 'bg-slate-200'}`} />
+              <div className={`h-1 flex-1 mx-2 ${step > s ? (highContrast ? 'bg-indigo-600' : 'bg-primary') : (highContrast ? 'bg-slate-800' : 'bg-slate-200')}`} />
             )}
           </div>
         ))}
@@ -217,8 +217,8 @@ const CreateRequest = () => {
                             onClick={() => setSelectedScribes(prev => prev.includes(scribe.scribe_id) ? prev.filter(id => id !== scribe.scribe_id) : [...prev, scribe.scribe_id])} 
                             className={`group relative p-4 border-2 rounded-2xl transition-all duration-300 cursor-pointer flex justify-between items-center overflow-hidden
                               ${isSelected 
-                                ? (highContrast ? 'border-yellow-400 bg-yellow-400/10' : 'border-blue-600 bg-blue-50 shadow-md ring-1 ring-blue-600/20') 
-                                : (highContrast ? 'border-slate-800 hover:border-yellow-400/50' : 'border-slate-100 hover:border-blue-200 bg-white')
+                                ? (highContrast ? 'border-indigo-600 bg-indigo-600/10 shadow-lg' : 'border-blue-600 bg-blue-50 shadow-md ring-1 ring-blue-600/20') 
+                                : (highContrast ? 'border-slate-800 bg-slate-900/50 hover:border-slate-700' : 'border-slate-100 hover:border-blue-200 bg-white')
                               }`}
                           >
                               {isSelected && !highContrast && (
@@ -229,8 +229,8 @@ const CreateRequest = () => {
                                   <div className="relative">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg uppercase transition-transform group-hover:scale-105
                                       ${isSelected 
-                                        ? (highContrast ? 'bg-yellow-400 text-black' : 'bg-blue-600 text-white shadow-lg') 
-                                        : (highContrast ? 'bg-slate-50 text-slate-400' : 'bg-slate-100 text-slate-600')
+                                        ? (highContrast ? 'bg-indigo-600 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg') 
+                                        : (highContrast ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600')
                                       }`}
                                     >
                                       {scribe.first_name[0]}
@@ -249,7 +249,7 @@ const CreateRequest = () => {
                                       </span>
                                       {scribe.priority === 1 && (
                                         <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider flex items-center gap-1
-                                          ${highContrast ? 'bg-yellow-400 text-black' : 'bg-green-100 text-green-700 border border-green-200'}`}
+                                          ${highContrast ? 'bg-indigo-900/50 text-indigo-400 border border-indigo-800' : 'bg-green-100 text-green-700 border border-green-200'}`}
                                         >
                                           <MapPin size={8} /> Nearby
                                         </span>
@@ -275,10 +275,10 @@ const CreateRequest = () => {
                               <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${isSelected ? 'scale-100' : 'opacity-60'}`}>
                                 {isSelected ? (
                                   <>
-                                    <div className={`p-1.5 rounded-lg ${highContrast ? 'bg-yellow-400 text-black' : 'bg-blue-600 text-white shadow-blue-200 shadow-md'}`}>
+                                    <div className={`p-1.5 rounded-lg ${highContrast ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white shadow-blue-200 shadow-md'}`}>
                                       <CheckCircle size={20} />
                                     </div>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest ${highContrast ? 'text-yellow-400' : 'text-blue-600'}`}>Selected</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest ${highContrast ? 'text-indigo-400' : 'text-blue-600'}`}>Selected</span>
                                   </>
                                 ) : (
                                   <>
@@ -300,7 +300,7 @@ const CreateRequest = () => {
                    <button 
                      onClick={() => changePage(page - 1)}
                      disabled={page === 1 || loadingPage}
-                     className={`px-4 py-2 rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'text-yellow-400 border border-yellow-400' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                     className={`px-4 py-2 rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'text-slate-100 border border-slate-700 hover:bg-slate-800' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
                    >
                      {t.common?.previous || "Previous"}
                    </button>
@@ -310,7 +310,7 @@ const CreateRequest = () => {
                    <button 
                      onClick={() => changePage(page + 1)}
                      disabled={!hasMore || loadingPage}
-                     className={`px-4 py-2 rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'text-yellow-400 border border-yellow-400' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                     className={`px-4 py-2 rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed ${highContrast ? 'text-slate-100 border border-slate-700 hover:bg-slate-800' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
                    >
                      {t.common?.next || "Next"}
                    </button>
@@ -329,13 +329,13 @@ const CreateRequest = () => {
       {/* Step 3: Success */}
       {step === 3 && (
         <div className={`p-12 rounded-3xl text-center shadow-xl ${bgClass}`}>
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 ${highContrast ? 'bg-yellow-400 text-black' : 'bg-green-100 text-green-600'}`}>
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 ${highContrast ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'bg-green-100 text-green-600'}`}>
             <CheckCircle size={56} />
           </div>
           <h2 className="text-4xl font-black mb-4">{t.request?.successTitle || "Request Sent!"}</h2>
           <p className="opacity-70 mb-10 text-xl max-w-md mx-auto">{t.request?.successDesc || "Invitations have been sent. If a scribe is found, we will notify you soon."}</p>
           <div className="flex flex-col md:flex-row justify-center gap-4">
-            <button onClick={() => navigate('/student/dashboard')} className={`px-10 py-4 rounded-2xl font-bold border-2 ${highContrast ? 'border-yellow-400 hover:bg-yellow-900' : 'border-slate-200 hover:bg-slate-50'}`}>
+            <button onClick={() => navigate('/student/dashboard')} className={`px-10 py-4 rounded-2xl font-bold border-2 ${highContrast ? 'border-slate-800 text-slate-400 hover:bg-slate-800/50' : 'border-slate-200 hover:bg-slate-50'}`}>
               {t.nav?.dashboard || "Go to Dashboard"}
             </button>
             <button onClick={() => window.location.reload()} className={`px-10 py-4 rounded-2xl font-black shadow-lg ${btnClass}`}>

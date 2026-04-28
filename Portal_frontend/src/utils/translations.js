@@ -8,7 +8,59 @@ export const translations = {
       logout: "Sign Out",
       welcome: "Welcome,",
       register: "Register",
-      profile: "Profile"
+      profile: "Profile",
+      account: "Account",
+      manageUsers: "Manage Users",
+      signIn: "Sign In",
+      join: "Join",
+      mode: "Mode",
+      dashboard: "Dashboard"
+    },
+    home: {
+      heroTag: "Empowering Accessibility",
+      heroTitlePart1: "Exams for",
+      heroTitleEveryone: "Everyone.",
+      heroTitlePart2: "Powered by",
+      heroSubtitle: "The world's most advanced platform connecting students with professional scribes. Seamless, secure, and built for real impact.",
+      getStarted: "Get Started",
+      signIn: "Sign In",
+      verified: "Verified",
+      panIndia: "Pan India",
+      altruistic: "Altruistic",
+      professional: "Professional",
+      featuresTitle: "Production-Ready Features",
+      featuresSubtitle: "Built with the latest technologies to ensure 100% reliability during critical examinations.",
+      feature1Title: "Verified Scribes",
+      feature1Desc: "Every partner undergoes strict background checks and document verification before they can help you.",
+      feature2Title: "Real-time Sync",
+      feature2Desc: "Instant notifications for bookings, messages, and calls via WebSockets and high-speed signaling.",
+      feature3Title: "Global Network",
+      feature3Desc: "Access a nationwide pool of scribes regardless of your city or exam center location.",
+      howItWorksTitle: "How it works",
+      howItWorksSubtitle: "Getting the support you need is simpler than ever.",
+      step1Title: "Create Profile",
+      step1Desc: "Sign up as a student or scribe and complete your verification process.",
+      step2Title: "Post Request",
+      step2Desc: "Students post their exam details and requirements in seconds.",
+      step3Title: "Get Matched",
+      step3Desc: "Our intelligent system connects you with the perfect scribe nearby.",
+      stat1Label: "Scribes Verified",
+      stat2Label: "Exams Completed",
+      stat3Label: "Satisfaction Rate",
+      stat4Label: "Cities Covered",
+      footerTagline: "Bridging the gap between ability and opportunity through technology.",
+      footerPlatform: "Platform",
+      footerLogin: "Login",
+      footerRegister: "Register",
+      footerAbout: "About Us",
+      footerSupport: "Support",
+      footerHelp: "Help Center",
+      footerContact: "Contact",
+      footerPrivacy: "Privacy",
+      ctaTitle: "Ready to make a difference?",
+      ctaSubtitle: "Whether you're a student seeking support or a volunteer ready to help, our platform is ready for you.",
+      ctaButton: "Join ScribePool Today",
+      rights: "ScribePool Technologies. All Rights Reserved."
     },
     common: {
       error: "Something went wrong. Please try again.",
@@ -77,7 +129,20 @@ export const translations = {
       submit: "Register as Student",
       uploading: "Uploading...",
       uploaded: "Uploaded",
-      loading: "Loading..."
+      loading: "Loading...",
+      subtitle: "Create your secure student account",
+      uploadPhoto: "Upload Photo",
+      changePhoto: "Change Photo",
+      choosePdf: "Choose PDF File"
+    },
+    scribeRegister: {
+      title: "Join as Scribe",
+      subtitle: "Volunteer your skills to empower others",
+      personalInfo: "Professional Profile",
+      location: "Operational Area",
+      academic: "Qualifications",
+      docs: "Identity & Document Verification",
+      submit: "Register as Scribe"
     },
     login: {
       title: "Welcome Back",
@@ -89,18 +154,28 @@ export const translations = {
       submitButton: "Sign In",
       registerLink: "Register as Student or Scribe",
       noAccount: "Don't have an account?",
-      togglePassword: "Toggle password visibility"
+      togglePassword: "Toggle password visibility",
+      gatewayAccess: "Secure Gateway Access",
+      credentialLabel: "Credential",
+      securityKeyLabel: "Security Key",
+      newToPlatform: "New to ScribePool?",
+      createAccount: "Create Partner Account",
+      encryptedSession: "End-to-End Encrypted Session"
     },
     validation: {
       invalidEmail: "Please enter a valid email address.",
       invalidPhone: "Phone number must be exactly 10 digits.",
       passShort: "Password must be at least 4 characters.",
-      passSpecial: "Password must include a special character (!@#$%^&*)."
+      passSpecial: "Password must include a special character (!@#$%^&*).",
+      uploadBoth: "Please upload both required documents.",
+      placeholderPrefix: "Your",
+      passRequired: "Password is required.",
+      loginFailed: "Login failed. Invalid credentials."
     },
     accessibility: {
       switchLanguage: "Switch Language",
-      toggleContrast: "Toggle High Contrast",
-      highContrastMode: "High Contrast Mode"
+      toggleContrast: "Toggle Dark Mode",
+      highContrastMode: "Dark Mode"
     },
     errors: {
       missingFields: "Please fill all required fields.",
@@ -147,6 +222,13 @@ export const translations = {
         pendingDesc: "You're all caught up!",
         historyTitle: "No past exams",
         historyDesc: "Completed exams will show up here."
+      },
+      studentLabel: "Student",
+      goChat: "Go to Chat",
+      viewDetails: "View Details",
+      status: {
+        confirmed: "Confirmed",
+        completed: "Completed"
       }
     },
     availability: {
@@ -259,7 +341,59 @@ export const translations = {
       logout: "साइन आउट",
       welcome: "स्वागत है,",
       register: "रजिस्टर",
-      profile: "प्रोफ़ाइल"
+      profile: "प्रोफ़ाइल",
+      account: "खाता",
+      manageUsers: "उपयोगकर्ता प्रबंधित करें",
+      signIn: "साइन इन",
+      join: "जुड़ें",
+      mode: "मोड",
+      dashboard: "डैशबोर्ड"
+    },
+    home: {
+      heroTag: "एक्सेसिबिलिटी को सशक्त बनाना",
+      heroTitlePart1: "परीक्षा सबके",
+      heroTitleEveryone: "लिए।",
+      heroTitlePart2: "संचालित",
+      heroSubtitle: "छात्रों को पेशेवर लेखकों से जोड़ने वाला दुनिया का सबसे उन्नत मंच। निर्बाध, सुरक्षित और वास्तविक प्रभाव के लिए बनाया गया।",
+      getStarted: "शुरू करें",
+      signIn: "साइन इन",
+      verified: "सत्यापित",
+      panIndia: "पैन इंडिया",
+      altruistic: "परोपकारी",
+      professional: "पेशेवर",
+      featuresTitle: "प्रोडक्शन-रेडी फीचर्स",
+      featuresSubtitle: "महत्वपूर्ण परीक्षाओं के दौरान 100% विश्वसनीयता सुनिश्चित करने के लिए नवीनतम तकनीकों के साथ निर्मित।",
+      feature1Title: "सत्यापित लेखक",
+      feature1Desc: "आपकी मदद करने से पहले प्रत्येक साथी की सख्त बैकग्राउंड जांच और दस्तावेज़ सत्यापन किया जाता है।",
+      feature2Title: "रियल-टाइम सिंक",
+      feature2Desc: "वेबसॉकेट और हाई-स्पीड सिग्नलिंग के माध्यम से बुकिंग, संदेश और कॉल के लिए त्वरित सूचनाएं।",
+      feature3Title: "वैश्विक नेटवर्क",
+      feature3Desc: "अपने शहर या परीक्षा केंद्र के स्थान की परवाह किए बिना लेखकों के देशव्यापी पूल तक पहुंचें।",
+      howItWorksTitle: "यह कैसे काम करता है",
+      howItWorksSubtitle: "आपको जिस सहायता की आवश्यकता है उसे प्राप्त करना पहले से कहीं अधिक सरल है।",
+      step1Title: "प्रोफ़ाइल बनाएं",
+      step1Desc: "छात्र या लेखक के रूप में साइन अप करें और अपनी सत्यापन प्रक्रिया पूरी करें।",
+      step2Title: "अनुरोध पोस्ट करें",
+      step2Desc: "छात्र कुछ ही सेकंड में अपनी परीक्षा का विवरण और आवश्यकताएं पोस्ट करते हैं।",
+      step3Title: "मैच प्राप्त करें",
+      step3Desc: "हमारा इंटेलिजेंट सिस्टम आपको पास के सही लेखक से जोड़ता है।",
+      stat1Label: "सत्यापित लेखक",
+      stat2Label: "परीक्षाएं पूर्ण",
+      stat3Label: "संतुष्टि दर",
+      stat4Label: "शहर कवर किए गए",
+      footerTagline: "प्रौद्योगिकी के माध्यम से क्षमता और अवसर के बीच की खाई को पाटना।",
+      footerPlatform: "प्लैटफ़ॉर्म",
+      footerLogin: "लॉग इन",
+      footerRegister: "पंजीकरण",
+      footerAbout: "हमारे बारे में",
+      footerSupport: "सहायता",
+      footerHelp: "सहायता केंद्र",
+      footerContact: "संपर्क",
+      footerPrivacy: "गोपनीयता",
+      ctaTitle: "क्या आप बदलाव लाने के लिए तैयार हैं?",
+      ctaSubtitle: "चाहे आप सहायता चाहने वाले छात्र हों या मदद के लिए तैयार स्वयंसेवक, हमारा मंच आपके लिए तैयार है।",
+      ctaButton: "आज ही स्क्राइबपूल से जुड़ें",
+      rights: "स्क्राइबपूल टेक्नोलॉजीज। सर्वाधिकार सुरक्षित।"
     },
     common: {
       error: "कुछ गलत हो गया। कृपया पुन: प्रयास करें।",
@@ -328,7 +462,20 @@ export const translations = {
       submit: "रजिस्टर करें",
       uploading: "अपलोड हो रहा है...",
       uploaded: "अपलोड किया गया",
-      loading: "लोड हो रहा है..."
+      loading: "लोड हो रहा है...",
+      subtitle: "अपना सुरक्षित छात्र खाता बनाएं",
+      uploadPhoto: "फोटो अपलोड करें",
+      changePhoto: "फोटो बदलें",
+      choosePdf: "पीडीएफ फाइल चुनें"
+    },
+    scribeRegister: {
+      title: "स्क्राइब के रूप में जुड़ें",
+      subtitle: "दूसरों को सशक्त बनाने के लिए अपने कौशल का योगदान दें",
+      personalInfo: "पेशेवर प्रोफ़ाइल",
+      location: "कार्य क्षेत्र",
+      academic: "योग्यता",
+      docs: "पहचान और दस्तावेज़ सत्यापन",
+      submit: "स्क्राइब के रूप में रजिस्टर करें"
     },
     login: {
       title: "वापसी पर स्वागत है",
@@ -340,18 +487,28 @@ export const translations = {
       submitButton: "साइन इन करें",
       registerLink: "रजिस्टर करें",
       noAccount: "खाता नहीं है?",
-      togglePassword: "पासवर्ड दिखाएं"
+      togglePassword: "पासवर्ड दिखाएं",
+      gatewayAccess: "सुरक्षित गेटवे एक्सेस",
+      credentialLabel: "क्रेडेंशियल",
+      securityKeyLabel: "सुरक्षा कुंजी",
+      newToPlatform: "स्क्राइबपूल पर नए हैं?",
+      createAccount: "पार्टनर खाता बनाएं",
+      encryptedSession: "एंड-टू-एंड एन्क्रिप्टेड सेशन"
     },
     validation: {
       invalidEmail: "कृपया मान्य ईमेल दर्ज करें।",
       invalidPhone: "फोन नंबर 10 अंकों का होना चाहिए।",
       passShort: "पासवर्ड कम से कम 4 अक्षर का होना चाहिए।",
-      passSpecial: "पासवर्ड में एक विशेष वर्ण होना चाहिए।"
+      passSpecial: "पासवर्ड में एक विशेष वर्ण होना चाहिए।",
+      uploadBoth: "कृपया दोनों आवश्यक दस्तावेज़ अपलोड करें।",
+      placeholderPrefix: "आपका",
+      passRequired: "पासवर्ड अनिवार्य है।",
+      loginFailed: "लॉग इन विफल। अमान्य क्रेडेंशियल।"
     },
     accessibility: {
       switchLanguage: "भाषा बदलें",
-      toggleContrast: "हाई कंट्रास्ट",
-      highContrastMode: "हाई कंट्रास्ट मोड"
+      toggleContrast: "डार्क मोड",
+      highContrastMode: "डार्क मोड"
     },
     errors: {
       missingFields: "कृपया सभी फ़ील्ड भरें।",
@@ -398,6 +555,13 @@ export const translations = {
         pendingDesc: "आप अपडेट हैं!",
         historyTitle: "कोई इतिहास नहीं",
         historyDesc: "पूरी हुई परीक्षाएं यहां दिखाई देंगी।"
+      },
+      studentLabel: "छात्र",
+      goChat: "चैट पर जाएं",
+      viewDetails: "विवरण देखें",
+      status: {
+        confirmed: "पुष्टि की गई",
+        completed: "पूर्ण"
       }
     },
     availability: {

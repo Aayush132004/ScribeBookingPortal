@@ -37,11 +37,11 @@ const StudentRegister = () => {
     const phoneRegex = /^\d{10}$/;
     const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
 
-    if (!emailRegex.test(formData.email)) { setError("Please enter a valid email address."); return false; }
-    if (!phoneRegex.test(formData.phone)) { setError("Phone number must be exactly 10 digits."); return false; }
-    if (formData.password.length < 4) { setError("Password must be at least 4 characters."); return false; }
-    if (!specialCharRegex.test(formData.password)) { setError("Password must contain at least one special character."); return false; }
-    if (!formData.profile_image_url || !formData.aadhaar_card_url) { setError("Please upload both required documents."); return false; }
+    if (!emailRegex.test(formData.email)) { setError(t.validation.invalidEmail); return false; }
+    if (!phoneRegex.test(formData.phone)) { setError(t.validation.invalidPhone); return false; }
+    if (formData.password.length < 4) { setError(t.validation.passShort); return false; }
+    if (!specialCharRegex.test(formData.password)) { setError(t.validation.passSpecial); return false; }
+    if (!formData.profile_image_url || !formData.aadhaar_card_url) { setError(t.validation.uploadBoth); return false; }
     return true;
   };
 
@@ -66,8 +66,8 @@ const StudentRegister = () => {
       await api.post('/auth/studentRegister', formData);
       navigate('/login');
     } catch (err) {
-      if (err.response?.status === 409) setError("Email or Phone already registered.");
-      else setError(err.response?.data?.message || 'Registration failed');
+      if (err.response?.status === 409) setError(t.errors.conflict);
+      else setError(err.response?.data?.message || t.common.error);
     } finally {
       setLoading(false);
     }
@@ -83,14 +83,14 @@ const StudentRegister = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-24 relative z-10">
-        <div className={`rounded-[3rem] p-8 md:p-12 border ${highContrast ? 'bg-black border-yellow-400 text-yellow-400' : 'bg-white shadow-2xl border-white'}`}>
+        <div className={`rounded-[3rem] p-8 md:p-12 border transition-all duration-500 ${highContrast ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl backdrop-blur-xl' : 'bg-white shadow-2xl border-white'}`}>
           
           <div className="text-center mb-12">
-            <div className={`mx-auto h-20 w-20 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-xl ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white'}`}>
+            <div className={`mx-auto h-20 w-20 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-xl ${highContrast ? 'bg-indigo-600 text-white' : 'bg-primary-600 text-white'}`}>
                <UserPlus size={40} />
             </div>
             <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-2">{t.register.title}</h2>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Create your secure student account</p>
+            <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">{t.register.subtitle}</p>
           </div>
 
           {error && (
@@ -117,7 +117,7 @@ const StudentRegister = () => {
                   )}
                </div>
                <label className="cursor-pointer px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                  {formData.profile_image_url ? 'Change Photo' : 'Upload Photo'}
+                  {formData.profile_image_url ? t.register.changePhoto : t.register.uploadPhoto}
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'profile')} />
                </label>
             </div>
@@ -144,7 +144,7 @@ const StudentRegister = () => {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">{t.register.state}</label>
                   <select name="state" required onChange={handleChange} value={formData.state} className="w-full h-14 px-6 rounded-2xl bg-gray-50 border-none font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-600 transition-all appearance-none uppercase">
                     <option value="">{t.register.state}</option>
-                    {metadata?.states?.sort().map(s => <option key={s} value={s}>{s}</option>)}
+                    {metadata?.states?.sort()?.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -193,7 +193,7 @@ const StudentRegister = () => {
                       <UploadCloud className="mx-auto text-gray-300 mb-4" size={48} />
                       <p className="text-sm font-bold text-gray-500 mb-4">{t.register.aadhaar}</p>
                       <label className="cursor-pointer px-8 py-3 bg-primary-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all">
-                        Choose PDF File
+                        {t.register.choosePdf}
                         <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileChange(e, 'aadhaar')} />
                       </label>
                    </div>
@@ -204,7 +204,7 @@ const StudentRegister = () => {
             <button 
               type="submit" 
               disabled={loading || uploading.profile || uploading.aadhaar} 
-              className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-2xl transition-all active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50 ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-primary-200 hover:bg-primary-700 hover:shadow-primary-300'}`}
+              className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-2xl transition-all active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50 ${highContrast ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-primary-600 text-white shadow-primary-200 hover:bg-primary-700 hover:shadow-primary-300'}`}
             >
               {loading ? <Loader2 className="animate-spin" /> : <>{t.register.submit} <ArrowRight /></>}
             </button>
@@ -222,21 +222,24 @@ const SectionTitle = ({ icon: Icon, title }) => (
   </div>
 );
 
-const PremiumInput = ({ name, label, icon: Icon, type = "text", onChange, required }) => (
-  <div className="space-y-2 group">
+const PremiumInput = ({ name, label, icon: Icon, type = "text", onChange, required }) => {
+  const { t } = useAccessibility();
+  return (
+    <div className="space-y-2 group">
     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4 group-focus-within:text-primary-600 transition-colors">{label}</label>
     <div className="relative">
       <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary-400 transition-colors" size={20} />
       <input 
         name={name}
         type={type}
-        placeholder={`Your ${label}`}
+        placeholder={`${t.validation.placeholderPrefix} ${label}`}
         required={required}
         onChange={onChange}
         className="w-full h-14 pl-14 pr-6 rounded-2xl bg-gray-50 border-none font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-600 transition-all placeholder:text-gray-300 placeholder:font-medium"
       />
     </div>
   </div>
-);
+  );
+};
 
 export default StudentRegister;

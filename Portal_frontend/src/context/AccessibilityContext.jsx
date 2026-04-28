@@ -23,7 +23,7 @@ export const AccessibilityProvider = ({ children }) => {
   const toggleLanguage = () => setLanguage(prev => prev === 'en' ? 'hi' : 'en');
   const toggleContrast = () => setHighContrast(prev => !prev);
   
-  const t = translations[language];
+  const t = translations[language] || translations['en'];
 
   return (
     <AccessibilityContext.Provider value={{ language, toggleLanguage, highContrast, toggleContrast, t }}>

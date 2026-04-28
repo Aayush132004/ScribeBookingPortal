@@ -11,7 +11,7 @@ import { useAccessibility } from '../../context/AccessibilityContext';
 const ScribeDashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { t, highContrast } = useAccessibility(); 
+  const { t, language, highContrast } = useAccessibility(); 
 
   const [activeTab, setActiveTab] = useState('upcoming'); 
   const [page, setPage] = useState(1); 
@@ -141,7 +141,7 @@ const ScribeDashboard = () => {
 
            <button 
              onClick={() => navigate('/scribe/availability')}
-             className="px-8 py-4 bg-white text-primary-900 rounded-[1.5rem] font-black shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2"
+             className={`px-8 py-4 rounded-[1.5rem] font-black shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2 ${highContrast ? 'bg-indigo-600 text-white' : 'bg-white text-primary-900'}`}
            >
              <CalendarOff size={20} /> {t.scribeDashboard?.manageAvailability || "Status"}
            </button>
@@ -149,13 +149,13 @@ const ScribeDashboard = () => {
       </div>
 
       {/* Tabs Control */}
-      <div className="flex flex-wrap gap-2 p-2 bg-gray-100/80 backdrop-blur rounded-[2rem] w-fit border border-gray-200">
+      <div className={`flex flex-wrap gap-2 p-2 backdrop-blur rounded-[2rem] w-fit border transition-all ${highContrast ? 'bg-slate-900 border-slate-800' : 'bg-gray-100/80 border-gray-200'}`}>
         {['upcoming', 'pending', 'history'].map((tab) => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-8 py-3 rounded-[1.5rem] font-black text-sm transition-all flex items-center gap-2
-            ${activeTab === tab ? 'bg-white text-primary-600 shadow-premium border border-gray-100' : 'text-gray-500 hover:text-gray-800'}`}
+            ${activeTab === tab ? (highContrast ? 'bg-indigo-600 text-white' : 'bg-white text-primary-600 shadow-premium border border-gray-100') : 'text-gray-500 hover:text-gray-800'}`}
           >
             {t.scribeDashboard?.tabs?.[tab] || tab.charAt(0).toUpperCase() + tab.slice(1)}
             {tab === 'pending' && inviteCount > 0 && (
@@ -177,7 +177,7 @@ const ScribeDashboard = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {requests.map((req) => (
-              <div key={req.id || req.token} className={`group relative p-8 rounded-[2.5rem] transition-all duration-500 hover:shadow-premium-hover border border-gray-100 ${activeTab === 'history' ? 'bg-gray-50/50' : 'bg-white shadow-premium'}`}>
+              <div key={req.id || req.token} className={`group relative p-8 rounded-[2.5rem] transition-all duration-500 hover:shadow-premium-hover border ${highContrast ? 'bg-slate-900 border-slate-800' : activeTab === 'history' ? 'bg-gray-50/50' : 'bg-white shadow-premium border-gray-100'}`}>
                 
                 {/* Header: Name & Action */}
                 <div className="flex justify-between items-start mb-6">
@@ -187,7 +187,7 @@ const ScribeDashboard = () => {
                       </div>
                       <div>
                         <h3 className="font-black text-lg text-gray-900 group-hover:text-primary-600 transition-colors">{req.student_name}</h3>
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Student</p>
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">{t.scribeDashboard.studentLabel}</p>
                       </div>
                    </div>
                    {activeTab === 'upcoming' && (
@@ -205,7 +205,7 @@ const ScribeDashboard = () => {
                 <div className="space-y-4 mb-8 bg-gray-50/80 p-5 rounded-3xl border border-gray-100">
                   <div className="flex items-center gap-3 text-gray-600 font-bold text-sm">
                     <Calendar size={18} className="text-primary-400" />
-                    <span>{new Date(req.exam_date || req.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span>{new Date(req.exam_date || req.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-3 text-gray-600 font-bold text-sm">
                     <Clock size={18} className="text-primary-400" />
@@ -241,11 +241,11 @@ const ScribeDashboard = () => {
                     <div className="flex items-center gap-2">
                        <span className={`h-2 w-2 rounded-full ${activeTab === 'upcoming' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                          {activeTab === 'upcoming' ? 'Confirmed' : 'Completed'}
+                          {activeTab === 'upcoming' ? t.scribeDashboard.status.confirmed : t.scribeDashboard.status.completed}
                        </span>
                     </div>
                     <button onClick={() => navigate(activeTab === 'upcoming' ? `/chat/${req.id}` : `/profile`)} className="text-primary-600 font-black text-sm flex items-center gap-1 hover:gap-2 transition-all group/btn">
-                      {activeTab === 'upcoming' ? 'Go to Chat' : 'View Details'} <ArrowRight size={16} />
+                      {activeTab === 'upcoming' ? t.scribeDashboard.goChat : t.scribeDashboard.viewDetails} <ArrowRight size={16} />
                     </button>
                   </div>
                 )}

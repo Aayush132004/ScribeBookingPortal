@@ -23,11 +23,11 @@ const Login = () => {
     const hasAt = identifier.includes('@');
 
     if (hasAt || hasLetters) {
-      if (!emailRegex.test(identifier)) { setError("Valid email required."); return false; }
+      if (!emailRegex.test(identifier)) { setError(t.validation.invalidEmail); return false; }
     } else {
-      if (!phoneRegex.test(identifier)) { setError("10-digit phone number required."); return false; }
+      if (!phoneRegex.test(identifier)) { setError(t.validation.invalidPhone); return false; }
     }
-    if (!password) { setError("Password is required."); return false; }
+    if (!password) { setError(t.validation.passRequired); return false; }
     return true;
   };
 
@@ -46,14 +46,14 @@ const Login = () => {
       else if (role === 'SCRIBE') navigate('/scribe/dashboard');
       else navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Invalid credentials.');
+      setError(err.response?.data?.message || t.validation.loginFailed);
     } finally { 
       setLoading(false); 
     }
   };
 
   return (
-    <div className={`min-h-[90vh] flex items-center justify-center px-4 relative overflow-hidden ${highContrast ? 'bg-black' : 'bg-gray-50'}`}>
+    <div className={`min-h-[90vh] flex items-center justify-center px-4 relative overflow-hidden transition-colors duration-500 ${highContrast ? 'bg-slate-950' : 'bg-gray-50'}`}>
       
       {/* Decorative Background Shapes */}
       {!highContrast && (
@@ -66,16 +66,16 @@ const Login = () => {
       <div className={`max-w-md w-full relative z-10 transition-all duration-700 ${loading ? 'scale-95 opacity-50' : 'scale-100'}`}>
         
         <div className="text-center mb-10">
-          <div className={`mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-6 shadow-xl ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-primary-200 animate-float'}`}>
+          <div className={`mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-6 shadow-xl ${highContrast ? 'bg-indigo-600 text-white' : 'bg-primary-600 text-white shadow-primary-200 animate-float'}`}>
              <BookOpen size={32} />
           </div>
-          <h2 className={`text-4xl font-black tracking-tight mb-2 ${highContrast ? 'text-yellow-400' : 'text-gray-900'}`}>
+          <h2 className={`text-4xl font-black tracking-tight mb-2 ${highContrast ? 'text-white' : 'text-gray-900'}`}>
             {t.login?.title || "Welcome Back"}
           </h2>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Secure Gateway Access</p>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">{t.login.gatewayAccess}</p>
         </div>
 
-        <div className={`rounded-[2.5rem] p-10 border transition-all ${highContrast ? 'bg-black border-yellow-400' : 'bg-white shadow-2xl border-white'}`}>
+        <div className={`rounded-[2.5rem] p-10 border transition-all ${highContrast ? 'bg-slate-900/80 border-slate-800 backdrop-blur-xl' : 'bg-white shadow-2xl border-white'}`}>
           
           {error && (
             <div className="mb-8 p-4 bg-red-50 rounded-2xl border border-red-100 text-red-600 flex items-center gap-3 animate-in fade-in slide-in-from-top-4" role="alert">
@@ -86,14 +86,14 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="space-y-2 group">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4 group-focus-within:text-primary-600 transition-colors">Credential</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4 group-focus-within:text-primary-600 transition-colors">{t.login.credentialLabel}</label>
               <div className="relative">
                 <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary-400 transition-colors" size={20} />
                 <input
                   type="text"
                   required
-                  placeholder="Email or Phone Number"
-                  className={`w-full h-14 pl-14 pr-6 rounded-2xl bg-gray-50 border-none font-bold outline-none focus:ring-2 focus:ring-primary-600 transition-all ${highContrast ? 'bg-black border-2 border-yellow-400 text-yellow-400' : 'text-gray-900'}`}
+                  placeholder={t.login.identifierLabel}
+                  className={`w-full h-14 pl-14 pr-6 rounded-2xl border-none font-bold outline-none focus:ring-2 focus:ring-primary-600 transition-all ${highContrast ? 'bg-slate-800/50 text-slate-100 placeholder:text-slate-500' : 'bg-gray-50 text-gray-900'}`}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                 />
@@ -101,14 +101,14 @@ const Login = () => {
             </div>
 
             <div className="space-y-2 group">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4 group-focus-within:text-primary-600 transition-colors">Security Key</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4 group-focus-within:text-primary-600 transition-colors">{t.login.securityKeyLabel}</label>
               <div className="relative">
                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary-400 transition-colors" size={20} />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className={`w-full h-14 pl-14 pr-14 rounded-2xl bg-gray-50 border-none font-bold outline-none focus:ring-2 focus:ring-primary-600 transition-all ${highContrast ? 'bg-black border-2 border-yellow-400 text-yellow-400' : 'text-gray-900'}`}
+                  className={`w-full h-14 pl-14 pr-14 rounded-2xl border-none font-bold outline-none focus:ring-2 focus:ring-primary-600 transition-all ${highContrast ? 'bg-slate-800/50 text-slate-100 placeholder:text-slate-500' : 'bg-gray-50 text-gray-900'}`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -126,22 +126,22 @@ const Login = () => {
               type="submit"
               disabled={loading}
               className={`w-full h-16 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50
-                ${highContrast ? 'bg-yellow-400 text-black' : 'bg-primary-600 text-white shadow-primary-200 hover:bg-primary-700 hover:shadow-primary-300'}`}
+                ${highContrast ? 'bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700' : 'bg-primary-600 text-white shadow-primary-200 hover:bg-primary-700 hover:shadow-primary-300'}`}
             >
               {loading ? <Loader2 className="animate-spin" size={24} /> : <>{t.nav.login} <ArrowRight /></>}
             </button>
           </form>
 
           <div className="mt-10 pt-8 border-t border-gray-100 text-center">
-             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-4">New to ScribePool?</p>
+             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-4">{t.login.newToPlatform}</p>
              <Link to="/register-select" className="inline-flex items-center gap-2 text-primary-600 font-black text-sm hover:underline">
-                Create Partner Account <ArrowRight size={16} />
+                {t.login.createAccount} <ArrowRight size={16} />
              </Link>
           </div>
         </div>
 
         <div className="mt-8 flex items-center justify-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-           <ShieldCheck size={14} className="text-green-500" /> End-to-End Encrypted Session
+           <ShieldCheck size={14} className="text-green-500" /> {t.login.encryptedSession}
         </div>
       </div>
     </div>
