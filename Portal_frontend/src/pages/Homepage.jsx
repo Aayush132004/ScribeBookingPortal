@@ -108,18 +108,21 @@ const Home = () => {
               title={t.home.step1Title}
               desc={t.home.step1Desc}
               icon={UserPlus}
+              highContrast={highContrast}
             />
             <StepCard 
               number="02"
               title={t.home.step2Title}
               desc={t.home.step2Desc}
               icon={Clock}
+              highContrast={highContrast}
             />
             <StepCard 
               number="03"
               title={t.home.step3Title}
               desc={t.home.step3Desc}
               icon={Zap}
+              highContrast={highContrast}
             />
           </div>
         </div>
@@ -130,10 +133,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
             <div className="text-left max-w-2xl">
-              <h2 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
+              <h2 className={`text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight ${highContrast ? 'text-white' : 'text-gray-900'}`}>
                 {t.home.featuresTitle}
               </h2>
-              <p className="text-gray-500 font-bold text-xl leading-relaxed">
+              <p className={`font-bold text-xl leading-relaxed ${highContrast ? 'text-slate-400' : 'text-gray-500'}`}>
                 {t.home.featuresSubtitle}
               </p>
             </div>
@@ -150,31 +153,34 @@ const Home = () => {
               title={t.home.feature1Title} 
               desc={t.home.feature1Desc} 
               color="bg-blue-600"
+              highContrast={highContrast}
             />
             <FeatureCard 
               icon={Zap} 
               title={t.home.feature2Title} 
               desc={t.home.feature2Desc} 
               color="bg-orange-500"
+              highContrast={highContrast}
             />
             <FeatureCard 
               icon={Users} 
               title={t.home.feature3Title} 
               desc={t.home.feature3Desc} 
               color="bg-indigo-600"
+              highContrast={highContrast}
             />
           </div>
         </div>
       </section>
 
       {/* --- STATS SECTION --- */}
-      <section className="py-24 border-y border-gray-100">
+      <section className={`py-24 border-y ${highContrast ? 'border-slate-900' : 'border-gray-100'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-            <StatCard value="10k+" label={t.home.stat1Label} />
-            <StatCard value="25k+" label={t.home.stat2Label} />
-            <StatCard value="98%" label={t.home.stat3Label} />
-            <StatCard value="500+" label={t.home.stat4Label} />
+            <StatCard value="10k+" label={t.home.stat1Label} highContrast={highContrast} />
+            <StatCard value="25k+" label={t.home.stat2Label} highContrast={highContrast} />
+            <StatCard value="98%" label={t.home.stat3Label} highContrast={highContrast} />
+            <StatCard value="500+" label={t.home.stat4Label} highContrast={highContrast} />
           </div>
         </div>
       </section>
@@ -203,7 +209,7 @@ const Home = () => {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="py-20 border-t border-gray-100">
+      <footer className={`py-20 border-t ${highContrast ? 'border-slate-900' : 'border-gray-100'}`}>
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-12">
               <div className="flex flex-col items-center md:items-start gap-4">
@@ -220,7 +226,7 @@ const Home = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
                 <div>
-                  <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs mb-6">{t.home.footerPlatform}</h4>
+                  <h4 className={`font-black uppercase tracking-widest text-xs mb-6 ${highContrast ? 'text-slate-300' : 'text-gray-900'}`}>{t.home.footerPlatform}</h4>
                   <ul className="space-y-4 text-gray-500 font-bold">
                     <li><Link to="/login" className="hover:text-primary-600 transition-colors">{t.home.footerLogin}</Link></li>
                     <li><Link to="/register-select" className="hover:text-primary-600 transition-colors">{t.home.footerRegister}</Link></li>
@@ -228,7 +234,7 @@ const Home = () => {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs mb-6">{t.home.footerSupport}</h4>
+                  <h4 className={`font-black uppercase tracking-widest text-xs mb-6 ${highContrast ? 'text-slate-300' : 'text-gray-900'}`}>{t.home.footerSupport}</h4>
                   <ul className="space-y-4 text-gray-500 font-bold">
                     <li><a href="#" className="hover:text-primary-600 transition-colors">{t.home.footerHelp}</a></li>
                     <li><a href="#" className="hover:text-primary-600 transition-colors">{t.home.footerContact}</a></li>
@@ -238,7 +244,7 @@ const Home = () => {
               </div>
             </div>
             
-            <div className="mt-20 pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className={`mt-20 pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4 ${highContrast ? 'border-slate-900' : 'border-gray-100'}`}>
               <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">&copy; 2026 {t.home.rights}</p>
               <div className="flex gap-8 opacity-40">
                 <Globe size={20} />
@@ -266,7 +272,7 @@ const Home = () => {
           animation: gradient 8s linear infinite;
         }
         .bg-dashed-gradient {
-          background-image: linear-gradient(to right, #e5e7eb 50%, transparent 50%);
+          background-image: linear-gradient(to right, ${highContrast ? '#1e293b' : '#e5e7eb'} 50%, transparent 50%);
           background-size: 20px 100%;
         }
       `}</style>
@@ -274,42 +280,42 @@ const Home = () => {
   );
 };
 
-const TrustBadge = ({ icon: Icon, label }) => (
+const TrustBadge = ({ icon: Icon, label, highContrast }) => (
   <div className="flex flex-col items-center gap-3 group transition-all duration-500 hover:scale-110">
     <div className={`p-4 rounded-[1.5rem] transition-colors ${highContrast ? 'bg-slate-900 text-slate-500 group-hover:text-indigo-400' : 'bg-gray-50 text-gray-400 group-hover:bg-primary-50 group-hover:text-primary-600'}`}>
       <Icon size={28} strokeWidth={1.5} />
     </div>
-    <span className="text-[11px] font-black uppercase tracking-[0.2em]">{label}</span>
+    <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${highContrast ? 'text-slate-400' : 'text-gray-400'}`}>{label}</span>
   </div>
 );
 
-const StepCard = ({ number, title, desc, icon: Icon }) => (
-  <div className="relative z-10 flex flex-col items-center text-center p-10 rounded-[3rem] bg-white border border-gray-100 shadow-xl shadow-gray-200/50 hover:-translate-y-3 transition-all duration-500 group">
-    <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-2xl bg-primary-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-primary-200 group-hover:rotate-12 transition-transform">
+const StepCard = ({ number, title, desc, icon: Icon, highContrast }) => (
+  <div className={`relative z-10 flex flex-col items-center text-center p-10 rounded-[3rem] border transition-all duration-500 group ${highContrast ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-white border-gray-100 shadow-xl shadow-gray-200/50 hover:-translate-y-3'}`}>
+    <div className={`absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl transition-transform group-hover:rotate-12 ${highContrast ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-primary-600 text-white shadow-primary-200'}`}>
       {number}
     </div>
-    <div className="mb-8 mt-4 text-primary-100 group-hover:text-primary-600 transition-colors">
+    <div className={`mb-8 mt-4 transition-colors ${highContrast ? 'text-slate-700 group-hover:text-indigo-400' : 'text-primary-100 group-hover:text-primary-600'}`}>
       <Icon size={64} strokeWidth={1} />
     </div>
-    <h3 className="text-2xl font-black text-gray-900 mb-4">{title}</h3>
-    <p className="text-gray-500 font-bold leading-relaxed">{desc}</p>
+    <h3 className={`text-2xl font-black mb-4 ${highContrast ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+    <p className={`font-bold leading-relaxed ${highContrast ? 'text-slate-400' : 'text-gray-500'}`}>{desc}</p>
   </div>
 );
 
-const FeatureCard = ({ icon: Icon, title, desc, color }) => (
-  <div className="glass-card p-12 rounded-[3rem] border border-gray-100 hover:shadow-premium-hover hover:-translate-y-4 transition-all duration-700 group relative overflow-hidden bg-white">
+const FeatureCard = ({ icon: Icon, title, desc, color, highContrast }) => (
+  <div className={`glass-card p-12 rounded-[3rem] border hover:-translate-y-4 transition-all duration-700 group relative overflow-hidden ${highContrast ? 'bg-slate-900/50 border-slate-800 hover:shadow-indigo-500/10' : 'bg-white border-gray-100 hover:shadow-premium-hover'}`}>
     <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-[0.03] rounded-bl-full`}></div>
     <div className={`h-20 w-20 rounded-[1.75rem] ${color} text-white flex items-center justify-center mb-10 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
       <Icon size={36} strokeWidth={1.5} />
     </div>
-    <h3 className="text-3xl font-black text-gray-900 mb-6 tracking-tight">{title}</h3>
-    <p className="text-gray-500 font-bold text-lg leading-relaxed">{desc}</p>
+    <h3 className={`text-3xl font-black mb-6 tracking-tight ${highContrast ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+    <p className={`font-bold text-lg leading-relaxed ${highContrast ? 'text-slate-400' : 'text-gray-500'}`}>{desc}</p>
   </div>
 );
 
-const StatCard = ({ value, label }) => (
+const StatCard = ({ value, label, highContrast }) => (
   <div className="flex flex-col gap-2">
-    <div className="text-4xl md:text-6xl font-black text-primary-600 tracking-tighter">{value}</div>
+    <div className={`text-4xl md:text-6xl font-black tracking-tighter ${highContrast ? 'text-indigo-400' : 'text-primary-600'}`}>{value}</div>
     <div className="text-xs font-black uppercase tracking-widest text-gray-400">{label}</div>
   </div>
 );
